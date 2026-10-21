@@ -46,5 +46,6 @@ test('area traffic reports never become direct road live telemetry',()=>{
 test('imagery records need an explicit valid acquisition date',()=>{
  assert.equal(imageryAvailability({date:'2026-10-18'}).date,'2026-10-18');
  assert.equal(imageryAvailability({date:'not-a-date'}).date,null);
+ assert.equal(imageryAvailability({date:'2099-01-01'}).date,null);
  assert.equal(imageryAvailability(null).perRoadOccupancy,null);
 });
