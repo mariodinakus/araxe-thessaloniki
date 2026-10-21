@@ -65,3 +65,13 @@ A named street gets its own model only with sufficient local evidence; otherwise
 `snapshots/city.json.gz` contains a deduplicated metro parking inventory and road geometry, derived from real OpenFreeMap vector tiles, release 2026-10-18. Includes OpenStreetMap data, © OpenStreetMap contributors, © OpenMapTiles, OpenFreeMap. Geographic database derivative distributed under ODbL 1.0: https://opendatacommons.org/licenses/odbl/1-0/ . This is map inventory, **not parking occupancy or training labels**. It lets the app work when Overpass is unavailable. Snapshot road geometry is served by selected area immediately; parking inventory may refresh separately when a provider responds. Layer and UI show map source date. No API key or account is needed: https://openfreemap.org/ .
 
 Conservative cold-start candidate-name exclusions avoid central pedestrian-associated corridors (including all similarly named segments), without claiming legal restrictions for an entire street. Street legality still requires signage; overlay geometry is not a legal-bay inventory.
+
+## Street exploration ranking and map reliability (21 October 2026)
+
+When there are too few verified user reports to estimate the chance of a ten-minute search success, the road suggestions now use **mapped geometry only**: the distance to the *nearest portion* of the road, the aggregate mapped street-segment length within the area, and broad street class. Multiple segments of one named street are grouped. The listed distance is not distance to a legal bay; mapped length is not curbside parking capacity. Motorways, primary roads, footpaths and known restricted road tags are excluded from suggestions, without interpreting an untagged segment as legal. Streets with sufficient direct observations take priority, while geographic scoring is not represented as a probability or evidence of an empty space.
+
+Routes without names now get distinct feedback identifiers by mapped feature ID rather than pooling every unnamed road in an area as if they were one road. This depends on map-source identifier stability for unnamed segments.
+
+Inventory refresh retains the bundled snapshot unless a newer nonempty persisted inventory is available. Failed remote Overpass refreshes are retried with exponential backoff beginning at fifteen minutes (up to six hours), instead of making fresh outbound attempts for every client request. A stale inventory remains explicitly labeled stale; neither the snapshot nor the imagery is live parking occupancy.
+
+Tests for the geometric-ranking helper live in `road-ranking.test.mjs`; the GitHub workflow runs the full `npm test` suite for pushes and pull requests.
