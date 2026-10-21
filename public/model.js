@@ -1,0 +1,18 @@
+// Model v1: contextual Beta-Binomial with 45-day evidence half-life.
+export const zones = [
+ ['menemeni','Μενεμένη',40.658,22.899,'residential'],['evosmos','Εύοσμος',40.670,22.908,'residential'],['kordelio','Κορδελιό',40.669,22.894,'residential'],['ampelokipoi','Αμπελόκηποι',40.655,22.921,'residential'],['stavroupoli','Σταυρούπολη',40.669,22.938,'residential'],['polichni','Πολίχνη',40.667,22.950,'residential'],['neapoli','Νεάπολη',40.654,22.943,'residential'],['sykies','Συκιές',40.651,22.956,'residential'],['efkarpia','Ευκαρπία',40.689,22.954,'residential'],['oreokastro','Ωραιόκαστρο',40.730,22.917,'residential'],['sindos','Σίνδος',40.671,22.807,'residential'],['diavata','Διαβατά',40.688,22.857,'residential'],['station','Νέος Σιδηροδρομικός Σταθμός',40.644,22.930,'mixed'],['vardaris','Βαρδάρης',40.640,22.936,'mixed'],['ladadika','Λαδάδικα',40.635,22.936,'nightlife'],['center','Αριστοτέλους · Κέντρο',40.634,22.944,'center'],['rotonta','Ροτόντα · Καμάρα',40.634,22.953,'center'],['anopoli','Άνω Πόλη',40.642,22.956,'residential'],['universities','Πανεπιστήμια · ΔΕΘ',40.628,22.960,'mixed'],['white','Λευκός Πύργος',40.626,22.948,'center'],['faliro','Φάληρο',40.614,22.959,'residential'],['toumba','Τούμπα',40.613,22.977,'residential'],['charilaou','Χαριλάου',40.600,22.976,'residential'],['depο','Ντεπώ',40.597,22.963,'residential'],['kalamaria','Καλαμαριά',40.582,22.952,'mixed'],['pylaia','Πυλαία',40.600,22.999,'residential'],['panorama','Πανόραμα',40.587,23.034,'residential'],['thermi','Θέρμη',40.547,23.020,'residential'],['perea','Περαία',40.499,22.929,'mixed']
+].map(([id,name,lat,lon,type])=>({id,name,lat,lon,type}));
+export function context(at=Date.now()) { const p=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Athens',weekday:'short',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date(at)).map(x=>[x.type,x.value])); return {hour:+p.hour,weekend:['Sat','Sun'].includes(p.weekday)}; }
+export function distance(a,b) { const r=Math.PI/180,dlat=(a.lat-b.lat)*r,dlon=(a.lon-b.lon)*r; return 6371*2*Math.asin(Math.sqrt(Math.sin(dlat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dlon/2)**2)); }
+export function nearest(point) { return [...zones].sort((a,b)=>distance(a,point)-distance(b,point))[0]; }
+export function predict(zoneId,events,at=Date.now(),now=Date.now()) {
+ const zone=zones.find(z=>z.id===zoneId); if(!zone) throw Error('Unknown zone');
+ const c=context(at); let success=0,weight=0,count=0;
+ for(const e of events) {if(e.zone!==zoneId || e.at>now || e.at<now-180*86400000 || ![0,1].includes(e.outcome))continue; const ec=context(e.at); let delta=Math.abs(c.hour-ec.hour);delta=Math.min(delta,24-delta);if(ec.weekend!==c.weekend || delta>2)continue;const w=Math.pow(0.5,(now-e.at)/(45*86400000))*(delta===0?1:delta===1?.65:.3);weight+=w;success+=w*e.outcome;count++;}
+ const p=(1+success)/(2+weight), sd=Math.sqrt(p*(1-p)/(3+weight));
+ // Heuristic is deliberately a separate non-probabilistic cold-start indicator.
+ const busy=(zone.type==='center'&&c.hour>=9&&c.hour<21)||(zone.type==='nightlife'&&c.hour>=19)||(zone.type==='residential'&&(c.hour>=19||c.hour<8));
+ return {p,n:count,effective:weight,ready:weight>=12,low:Math.max(0,p-1.96*sd),high:Math.min(1,p+1.96*sd),difficulty:busy?'Αυξημένη':'Μέτρια',context:c};
+}
+export function metrics(events) { let sum=0,n=0,base=0;const history=[]; for(const e of [...events].sort((a,b)=>a.at-b.at)){const p=predict(e.zone,history,e.at,e.at);if(p.ready){sum+=(p.p-e.outcome)**2;base+=(.5-e.outcome)**2;n++;}history.push(e);}return {evaluated:n,brier:n?sum/n:null,baseline:n?base/n:null}; }
+export function mergeEvents(...groups){return [...new Map(groups.flat().map(e=>[e.id,e])).values()].sort((a,b)=>a.at-b.at).slice(-10000);}
