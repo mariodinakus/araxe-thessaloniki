@@ -123,6 +123,11 @@ export function openAerialLab(zoneId=null){
  if(!$('aerialLab'))return;
  $('aerialZone').value=zones.some(z=>z.id===zoneId)?zoneId:'menemeni';
  displayLast();status();$('aerialSceneStatus').textContent='Η αυτοεκπαίδευση οπτικού υποβάθρου ξεκινά όταν φορτώσεις εικόνα.';$('aerialLab').showModal();
+ const activeZone=$('aerialZone').value;
+ notice('Αναζητώ αυτόματα κατάλληλες δορυφορικές / εναέριες λήψεις OpenAerialMap για '+zones.find(z=>z.id===activeZone)?.name+'…');
+ discover(activeZone).then(result=>{
+  if(result&&$('aerialLab').open&&$('aerialZone').value===activeZone)return loadOam(result);
+ }).catch(e=>notice('Δεν φορτώθηκε αυτόματα εξωτερική λήψη: '+e.message+'. Ο ανοικτός χάρτης εξακολουθεί να είναι διαθέσιμος.'));
 }
 export function setupAerialLab(){
  const z=$('aerialZone');z.innerHTML=zones.map(v=>`<option value="${safe(v.id)}">${safe(v.name)}</option>`).join('');
