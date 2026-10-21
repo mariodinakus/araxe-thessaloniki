@@ -43,3 +43,9 @@
 .intel-detail-tier strong{font-size:12px;display:block}.intel-detail-tier small{font-size:9px;display:block;margin-top:4px;line-height:1.5;color:#60786b}
 .road-switch{max-width:calc(100% - 28px);overflow-x:auto}.road-switch button{white-space:nowrap}
 @media(max-width:700px){.intelligence{margin:12px 0;padding:14px}.intel-road-table{max-height:300px}.intel-heading h3{font-size:16px}.intel-kpis>div{min-height:67px}.intel-kpis strong{font-size:22px}.intel-official{flex-wrap:wrap}.intel-official a{width:100%}}
+
+
+.map-layer-buttons{display:flex;gap:5px;align-items:center;justify-content:flex-end;max-width:65%}
+.map-layer-buttons button{font-size:9px;padding:10px 11px;white-space:nowrap}
+.map-layer-buttons button.chosen{background:#234a3b;color:#fff;border-color:#234a3b}
+@media(max-width:700px){.map-layer-buttons{max-width:73%;overflow-x:auto;gap:4px}.map-layer-buttons button{font-size:8px;padding:8px 7px}.map-top{align-items:start}.map-label{max-width:27%;line-height:1.35}}
