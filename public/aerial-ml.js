@@ -33,7 +33,7 @@ function trainCore(samples,epochs=90){
  for(let epoch=0;epoch<epochs;epoch++){
   const rate=.08/(1+epoch/42);
   // Fully deterministic ordering; never accidentally train on validation observations.
-  for(let i=0;i<samples.length;i++){const s=samples[(i*17+epoch*31)%samples.length],vec=s.x;let z=w[d];
+  for(let i=0;i<samples.length;i++){const s=samples[(i+epoch*31)%samples.length],vec=s.x;let z=w[d];
    for(let j=0;j<d;j++)z+=w[j]*(vec[j]-means[j])/std[j];
    const p=sigmoid(z),balance=s.y?Math.min(3,samples.length/(2*positives)):Math.min(3,samples.length/(2*negatives));
    const error=clip((s.y-p)*balance,-3,3);
