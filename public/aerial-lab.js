@@ -193,10 +193,13 @@ async function discover(zoneId,quiet=false){
   const g=Number(f.properties?.gsd),license=String(f.properties?.license||f.properties?.['oam:license']||'CC-BY-4.0').toUpperCase();
   return Number.isFinite(g)&&g>0&&g<=.5&&['CC-BY-4.0','CC-BY-SA-4.0','CC-BY'].includes(license);
  });
- archive=eligible.slice(0,12);
- $('curbScenes').innerHTML=archive.length?archive.map((f,i)=>'<option value="'+i+'">'+safe(acquisitionDate(f))+' · '+safe(String(f.properties?.gsd))+' m/pixel · '+safe(f.id)+'</option>').join(''):'<option value="">Καμία επαρκώς λεπτομερής και αδειοδοτημένη λήψη</option>';
+ archive=eligible.sort((a,b)=>{
+  const plat=x=>x.properties?.['oam:platform_type']==='satellite'?1:0;
+  return plat(b)-plat(a)||acquisitionDate(b).localeCompare(acquisitionDate(a));
+ }).slice(0,12);
+ $('curbScenes').innerHTML=archive.length?archive.map((f,i)=>'<option value="'+i+'">'+safe(acquisitionDate(f))+' · '+safe(String(f.properties?.gsd))+' m/pixel · '+safe(f.properties?.['oam:platform_type']==='satellite'?'ΔΟΡΥΦΟΡΟΣ':'εναέρια λήψη')+' · '+safe(f.id)+'</option>').join(''):'<option value="">Καμία επαρκώς λεπτομερής και αδειοδοτημένη λήψη</option>';
  curbStatus();
- if(!eligible.length){if(!quiet)notice('Δεν βρέθηκε ανοικτή λήψη με γνωστή ημερομηνία, ανάλυση έως 0,5m/pixel και κατάλληλη άδεια CC-BY. Ανέβασε εικόνα με δικαιώματα.');return null;}
+ if(!eligible.length){if(!quiet)notice('Δεν βρέθηκε διαθέσιμη παλιά δορυφορική ή εναέρια λήψη με ανάλυση ≤0,5 m/pixel και άδεια χρήσης για αυτή την περιοχή. Δεν μπορούν να υπολογιστούν κενά από τα συνήθη δημόσια δορυφορικά δεδομένα.');return null;}
  const latest=eligible[0];lastDiscovered={feature:latest,zone:z};
  if(!quiet)notice('Βρέθηκε εικόνα OpenAerialMap: '+acquisitionDate(latest)+'. Η ύπαρξή της δεν σημαίνει πραγματικό χρόνο.');
  return lastDiscovered;
@@ -224,7 +227,7 @@ async function loadOam(record,display=true){
  for(const r of results)if(r){context.drawImage(r.im,r.dx*256,r.dy*256,256,256);loaded.add(r.dx+':'+r.dy);}
  if(!loaded.has('1:1'))throw Error('Δεν καλύπτεται με πραγματική εικόνα το κέντρο της περιοχής.');
  if(display){
-  setImage(canvas,{id:'oam:'+feature.id+':19/'+center.x+'/'+center.y,provider:'OpenAerialMap · '+(feature.properties?.['oam:producer_name']||feature.providers?.[0]?.name||'Open Imagery Network')+' · CC-BY 4.0',
+  setImage(canvas,{id:'oam:'+feature.id+':19/'+center.x+'/'+center.y,provider:'OpenAerialMap · '+(feature.properties?.['oam:platform_type']==='satellite'?'Δορυφορική':'Εναέρια')+' · '+(feature.properties?.['oam:producer_name']||feature.providers?.[0]?.name||'Open Imagery Network')+' · '+(feature.properties?.license||'CC-BY-4.0'),
    date,zone:zone.id,gsd,geo:{z:19,tileX,tileY},availableTiles:loaded,licenseVerified:true});
  }
  return {id:feature.id,date,tiles:loaded.size};
