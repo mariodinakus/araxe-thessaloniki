@@ -41,6 +41,6 @@ export function hourlyForecast(zone,parkingEvents,trafficEvents,at=Date.now(),no
  });
 }
 export function imageryAvailability(sceneRecord){
- const date=typeof sceneRecord?.date==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(sceneRecord.date)?sceneRecord.date:null;
+ const date=typeof sceneRecord?.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(sceneRecord.date)?sceneRecord.date:null;
  return {date,checked:date!==null,source:date?'OpenAerialMap / τοπική επιβεβαιωμένη λήψη':'Δεν έχει επιβεβαιωθεί λήψη',perRoadOccupancy:null};
 }
