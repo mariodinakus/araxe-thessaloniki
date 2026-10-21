@@ -1,8 +1,8 @@
 import {zones} from './model.js';
-import {extractImageFeatures,trainVisualModel,predictPatch,webMercatorTile,acquisitionDate,validSamples} from './aerial-ml.js';
+import {extractImageFeatures,trainVisualModel,predictPatch,webMercatorTile,acquisitionDate,validSamples,updateSceneProfile} from './aerial-ml.js';
 
 const $=id=>document.getElementById(id);
-const KEY='araxe-aerial-training-v1', WATCH='araxe-aerial-watch', LAST='araxe-aerial-last';
+const KEY='araxe-aerial-training-v1', WATCH='araxe-aerial-watch', LAST='araxe-aerial-last', SCENE='araxe-aerial-scenes-v1';
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function read(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}}
 function store(key,value){localStorage.setItem(key,JSON.stringify(value));}
@@ -22,6 +22,16 @@ function redraw(){
  view.width=source.width;view.height=source.height;ctx.drawImage(source,0,0);
  for(const m of marks){ctx.beginPath();ctx.arc(m.x,m.y,Math.max(3,source.width/150),0,Math.PI*2);ctx.lineWidth=2;ctx.fillStyle=m.label===1?'#ed6551':m.label===0?'#4ea9d0':m.color;ctx.strokeStyle='#fff';ctx.fill();ctx.stroke();}
 }
+function observeScene(meta){
+ try{
+  const all=read(SCENE,{}),previous=all[meta.zone]||null;
+  const features=extractImageFeatures(raw.getImageData(0,0,source.width,source.height));
+  const result=updateSceneProfile(previous,features,meta.id);
+  if(result.observed){all[meta.zone]=result.profile;store(SCENE,all);}
+  const count=result.profile?.n||0;
+  $('aerialSceneStatus').textContent='Αυτοεκπαίδευση οπτικού υποβάθρου: '+count+' διαφορετικές λήψεις στην περιοχή'+(Number.isFinite(result.novelty)?' · δείκτης οπτικής διαφοράς '+result.novelty.toFixed(3):'')+'. Δεν υπολογίζει κενές θέσεις.';
+ }catch(err){$('aerialSceneStatus').textContent='Η ανάλυση οπτικού υποβάθρου δεν ήταν δυνατή: '+err.message;}
+}
 function setImage(img,meta){
  let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
  if(!w||!h)throw Error('Η εικόνα δεν διαβάζεται.');
@@ -30,7 +40,7 @@ function setImage(img,meta){
  source.width=w;source.height=h;raw.clearRect(0,0,w,h);raw.drawImage(img,0,0,w,h);
  photo=meta;marks=[];view.hidden=false;
  $('aerialImageInfo').textContent=`${meta.provider} · ${meta.date||'άγνωστη ημερομηνία λήψης'} · ${w}×${h}px · ${meta.gsd?meta.gsd+' m/pixel':'χωρίς τεκμηριωμένη ανάλυση'}`;
- redraw();status();
+ redraw();status();observeScene(meta);
 }
 function patch(x,y){
  const size=Math.min(40,source.width,source.height);
@@ -112,7 +122,7 @@ function displayLast(){const latest=read(LAST,null);$('aerialLast').textContent=
 export function openAerialLab(zoneId=null){
  if(!$('aerialLab'))return;
  $('aerialZone').value=zones.some(z=>z.id===zoneId)?zoneId:'menemeni';
- displayLast();status();$('aerialLab').showModal();
+ displayLast();status();$('aerialSceneStatus').textContent='Η αυτοεκπαίδευση οπτικού υποβάθρου ξεκινά όταν φορτώσεις εικόνα.';$('aerialLab').showModal();
 }
 export function setupAerialLab(){
  const z=$('aerialZone');z.innerHTML=zones.map(v=>`<option value="${safe(v.id)}">${safe(v.name)}</option>`).join('');
