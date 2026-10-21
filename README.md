@@ -75,3 +75,26 @@ Routes without names now get distinct feedback identifiers by mapped feature ID 
 Inventory refresh retains the bundled snapshot unless a newer nonempty persisted inventory is available. Failed remote Overpass refreshes are retried with exponential backoff beginning at fifteen minutes (up to six hours), instead of making fresh outbound attempts for every client request. A stale inventory remains explicitly labeled stale; neither the snapshot nor the imagery is live parking occupancy.
 
 Tests for the geometric-ranking helper live in `road-ranking.test.mjs`; the GitHub workflow runs the full `npm test` suite for pushes and pull requests.
+
+## Aerial / satellite image learning lab — experimental
+
+A new **Αεροφωτογραφίες · ML** tab provides:
+
+- Direct OpenAerialMap STAC search scoped to a selected Thessaloniki neighborhood. Candidates must cover the area's center, have a dated observation, declared ground resolution <=0.8m/pixel and a displayed CC-BY-4.0 or CC-BY-SA-4.0 source license. The user may also upload a photo they are authorized to analyze; no Esri/Google basemap tile scraping.
+- Actual pixel processing in-browser: spatial grid RGB/lightness/edge features from 40×40-image-pixel patches, human labels for *vehicle visible / no vehicle visible*, a deterministic regularized logistic image classifier trained from annotated patches, and out-of-scene holdout evaluation against a historical class-frequency baseline.
+- The classifier only becomes available after a genuinely different held-out imagery scene contains both classes and beats the baseline on a Brier score. Training labels in an aerial photo identify vehicle-like visual patches, not parking legality, ownership, empty bays or up-to-date occupancy.
+- **Unsupervised learning:** each distinct loaded aerial scene updates a locally stored rolling appearance profile for that area, even without manual labels, and shows a scene-difference signal when enough scenes exist. This is not a free-parking detector.
+- Opt-in search for newer available images every six hours **only while the page remains open**. This is not a continuous server worker; no fresh imagery is guaranteed. The app does not claim satellite live capture or through-cloud visibility.
+- Separate localStorage training-feature persistence, JSON export/import, and local model inference. Uploaded photos, GPS and number plates are not sent to the ARAXE backend. Feature vectors are derived from the pixels of submitted/available images. The first model trains per-device; crowd annotations are not yet aggregated across browsers.
+- This lightweight image-patch classifier is intended as a foundation and does **not** match specialized object detection from orthorectified submeter imagery. It has not been calibrated in Thessaloniki and must not be connected to street availability forecasts until verified matched capture times, legal street bays, independent field observations and ongoing validation are available.
+
+OpenAerialMap imagery API: https://docs.imagery.hotosm.org/usage/using-imagery/ . Each image's license and producer must be honored.
+
+## Published parking price comparison
+
+A price-comparison section in the sidebar offers quoted amounts for a chosen stay duration. Sources were manually verified 2026-10-21:
+- THESi visitor bays 1.70 EUR/hour, four-hour sector limit, **only at signed municipal bays**: https://thesi.gr/
+- HELEXPO Angellaki and Ioannis Vellidis: staged short-stay rates starting at EUR 5 for the first hour, EUR 8 for 1–2 hours, EUR 21 for 24h from the operator's **newer** tariff section: https://helexpo.gr/services/parking-spaces/
+- Parking Vikas at Agiou Dimitriou 141: standard-car first hour EUR 4, second-hour increment EUR 2, 24h EUR 20: https://parkingvikas.gr/ . Missing price brackets are shown as unknown rather than interpolated.
+
+Price information is only a published source quote, not real-time tariffs or bookings, and does not imply that the user can park in any street of the selected area. Municipal tariffs have time-of-day, holiday, residency and signage conditions not fully modeled by the simple calculator.
