@@ -21,3 +21,20 @@
 .aerial-import input{display:none}
 #aerialMessage{padding:11px 14px;background:#edf4f2;border-radius:10px;font-weight:600;font-size:11px}
 @media(max-width:700px){.aerial-dialog{padding:22px 16px;max-height:92dvh}.aerial-dialog h2{font-size:26px}.aerial-fields{grid-template-columns:1fr}nav{gap:2px;overflow-x:auto}nav .nav{font-size:9px;white-space:normal;flex-shrink:0;padding-left:6px;padding-right:6px}.aerial-controls{align-items:stretch}.aerial-controls button{font-size:11px}}
+
+
+.curb-lab{margin:16px 0;padding:16px;border:1px solid #d0e0d6;border-radius:14px;background:linear-gradient(125deg,#eef6ef,#f8fbf4)}
+.curb-lab h3{font-size:16px;letter-spacing:-.4px;margin:5px 0 10px}
+.curb-lab p{font-size:10px;line-height:1.65}
+.curb-actions{display:flex;gap:7px;margin:10px 0;flex-wrap:wrap;align-items:flex-end}
+.curb-actions label{font-size:10px;font-weight:700;display:flex;flex:1;min-width:120px;flex-direction:column;gap:5px}
+.curb-actions select{font-size:11px;border:1px solid #ccd9cd;border-radius:8px;padding:9px;background:white;min-width:0;max-width:100%}
+.curb-actions button{font-size:10px;border:1px solid #cfddd1;padding:10px 11px;background:#fff;border-radius:9px}
+.curb-actions button.chosen{background:#224d3b;color:#fff}
+.curb-actions button:disabled{opacity:.5;cursor:not-allowed}
+.curb-stats{border:1px solid #d6e4d8;border-radius:9px;padding:10px;background:#fff;font-weight:700;font-size:10px;line-height:1.7}
+.curb-result{margin-top:10px;font-size:11px;line-height:1.8}
+.curb-result strong{display:block;padding:7px 0;font-size:13px}
+.curb-result>div{padding:4px 0;border-bottom:1px solid #e2e8df}
+.historic-pins{color:#fff;background:#159765;border:2px solid #fff;border-radius:100%;box-shadow:0 2px 8px #0003}
+@media(max-width:700px){.curb-lab{padding:12px}.curb-actions{gap:6px}.curb-actions button{font-size:9px;flex:1;min-width:100px}}
