@@ -35,7 +35,16 @@
 <label>Ανάλυση εδάφους, m/pixel (αν γνωστή)<input id="aerialGsd" type="number" min="0.01" max="10" step="0.01" placeholder="π.χ. 0.15"></label>
 <label>PNG, JPG, WEBP (έως 12 MB)<input type="file" id="aerialUpload" accept="image/jpeg,image/png,image/webp"></label>
 </div><label class="aerial-check"><input type="checkbox" id="aerialRights"> Έχω δικαίωμα να χρησιμοποιήσω την εικόνα για ανάλυση/εκπαίδευση και γνωρίζω την ημερομηνία λήψης.</label></details>
-<div id="aerialImageInfo" class="fine muted">Δεν έχει φορτωθεί εικόνα.</div><div class="aerial-image"><canvas id="aerialCanvas" hidden aria-label="Κάνε κλικ για να επισημάνεις οχήματα ή τμήματα χωρίς όχημα"></canvas></div>
+<section id="curbLab" class="curb-lab">
+<div class="eyebrow">HISTORICAL SATELLITE SPACE DETECTOR</div><h3>Πού φαίνεται κενό δίπλα στον δρόμο;</h3>
+<p class="fine">Αυτόματη δημιουργία υποψήφιων σημείων ανά ~6 μέτρα πάνω σε πραγματικούς δρόμους OSM, σε γεωαναφερμένες λήψεις. Τα σημεία είναι <b>θέσεις οπτικής εξέτασης</b>, όχι επιβεβαιωμένες νόμιμες θέσεις.</p>
+<div class="curb-actions"><label>Ιστορική λήψη<select id="curbScenes" aria-label="Ιστορικές δορυφορικές λήψεις"><option value="">Αναζήτηση εικόνων…</option></select></label><button id="curbLoad" type="button">Φόρτωσε λήψη</button></div>
+<div class="curb-actions"><button id="curbClear" type="button" class="chosen">Κλικ: οπτικά κενό</button><button id="curbOccupied" type="button">Κλικ: όχημα</button></div>
+<div class="curb-actions"><button id="curbScan" type="button" disabled>Σάρωσε για πιθανά κενά</button><button id="curbScanArchive" type="button" disabled>Ανάλυσε παλιότερες λήψεις</button></div>
+<div id="curbStats" class="curb-stats" aria-live="polite">Χωρίς εικόνες και δεδομένα εκπαίδευσης.</div>
+<div id="curbResult" class="curb-result" aria-live="polite"></div>
+<p class="fine muted">Το μοντέλο εκπαιδεύεται μόνο από πραγματικά επισημασμένες θέσεις σε <b>διαφορετικές παλιές εικόνες</b> και δοκιμάζεται σε άλλη εικόνα. Το κενό που φαίνεται κάποια παλιά ημερομηνία δεν είναι ζωντανή ελεύθερη θέση ούτε αποδεικνύει ότι επιτρέπεται να παρκάρεις.</p>
+</section><div id="aerialImageInfo" class="fine muted">Δεν έχει φορτωθεί εικόνα.</div><div class="aerial-image"><canvas id="aerialCanvas" hidden aria-label="Κάνε κλικ σε υποψήφιο σημείο δίπλα σε δρόμο για εκπαίδευση οπτικής πληρότητας"></canvas></div>
 <div class="aerial-toolbar"><button id="aerialPositive" class="chosen">+ Φαίνεται όχημα</button><button id="aerialNegative">− Δεν φαίνεται όχημα</button><button id="aerialPredict" disabled>Ανάλυση εικόνας με ML</button></div>
 <p class="fine">Κάνε κλικ πάνω στο κέντρο ενός οχήματος ή σε καθαρό τμήμα χωρίς όχημα. Οι θετικές και αρνητικές επισημάνσεις εκπαιδεύουν πραγματικό μοντέλο οπτικών χαρακτηριστικών. Για αξιόπιστο έλεγχο χρειάζονται διαφορετικές λήψεις — όχι απλώς πολλά κλικ στην ίδια φωτογραφία.</p>
 <div class="aerial-stats"><div id="aerialSceneStatus">Χωρίς οπτικές παρατηρήσεις.</div><strong id="aerialStats"></strong><div id="aerialModelStatus"></div><div id="aerialValidation"></div></div>
