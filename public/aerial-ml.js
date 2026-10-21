@@ -76,3 +76,16 @@ export function acquisitionDate(feature){
  const s=feature?.properties?.datetime||feature?.properties?.start_datetime||feature?.properties?.['dct:date']||null;
  const date=s?Date.parse(s):NaN;return Number.isFinite(date)&&date<=Date.now()?new Date(date).toISOString().slice(0,10):null;
 }
+
+/** Unsupervised per-area image appearance baseline. This learns scenery drift,
+ * NOT a vehicle detector and certainly not the count of free spaces. */
+export function updateSceneProfile(previous,features,sceneId){
+ if(!Array.isArray(features)||features.length!==84||!features.every(Number.isFinite)||typeof sceneId!=='string'||!sceneId)return {profile:previous||null,observed:false,novelty:null};
+ const p=previous&&Array.isArray(previous.mean)&&previous.mean.length===84?previous:{n:0,mean:Array(84).fill(0),m2:Array(84).fill(0),seen:[]};
+ if(p.seen.includes(sceneId))return {profile:p,observed:false,novelty:null};
+ const n=p.n+1,difference=features.map((v,i)=>v-p.mean[i]);
+ const novelty=p.n>=2?Math.sqrt(difference.reduce((v,x)=>v+x*x,0)/84):null;
+ const mean=p.mean.map((v,i)=>v+difference[i]/n);
+ const m2=p.m2.map((v,i)=>v+difference[i]*(features[i]-mean[i]));
+ return {profile:{n,mean,m2,seen:[...p.seen,sceneId].slice(-120)},observed:true,novelty};
+}
