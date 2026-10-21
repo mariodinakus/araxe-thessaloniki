@@ -20,7 +20,7 @@
 <div id="aerialImageInfo" class="fine muted">Δεν έχει φορτωθεί εικόνα.</div><div class="aerial-image"><canvas id="aerialCanvas" hidden aria-label="Κάνε κλικ για να επισημάνεις οχήματα ή τμήματα χωρίς όχημα"></canvas></div>
 <div class="aerial-toolbar"><button id="aerialPositive" class="chosen">+ Φαίνεται όχημα</button><button id="aerialNegative">− Δεν φαίνεται όχημα</button><button id="aerialPredict" disabled>Ανάλυση εικόνας με ML</button></div>
 <p class="fine">Κάνε κλικ πάνω στο κέντρο ενός οχήματος ή σε καθαρό τμήμα χωρίς όχημα. Οι θετικές και αρνητικές επισημάνσεις εκπαιδεύουν πραγματικό μοντέλο οπτικών χαρακτηριστικών. Για αξιόπιστο έλεγχο χρειάζονται διαφορετικές λήψεις — όχι απλώς πολλά κλικ στην ίδια φωτογραφία.</p>
-<div class="aerial-stats"><strong id="aerialStats"></strong><div id="aerialModelStatus"></div><div id="aerialValidation"></div></div>
+<div class="aerial-stats"><div id="aerialSceneStatus">Χωρίς οπτικές παρατηρήσεις.</div><strong id="aerialStats"></strong><div id="aerialModelStatus"></div><div id="aerialValidation"></div></div>
 <label class="aerial-check"><input type="checkbox" id="aerialWatch"> Έλεγχε τον ανοικτό κατάλογο ανά 6 ώρες όσο η εφαρμογή είναι ανοιχτή και ανέλυε νέες κατάλληλες λήψεις όταν έχει εκπαιδευτεί το μοντέλο.</label>
 <p id="aerialLast" class="fine muted"></p><p id="aerialMessage" role="status" aria-live="polite">Τα αποτελέσματα είναι πειραματικά και δεν αποτελούν ενημέρωση πληρότητας στάθμευσης.</p>
 <div class="actions"><button id="aerialExport">Εξαγωγή δειγμάτων JSON</button><label class="aerial-import">Εισαγωγή δειγμάτων<input id="aerialImport" type="file" accept="application/json,.json"></label></div>
