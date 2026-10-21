@@ -43,3 +43,9 @@ The service refreshes inventory at boot and every six hours while running; brows
 - https://render.com/docs/free
 
 See `model.test.mjs` for cold-start, learning, decay, deduplication, timezone and evaluation tests. All API observations are validated and stamped with server time. No accounts, cameras or exact street-space detection are implemented.
+
+## Road overlays and traffic learning
+
+Selecting an area loads actual OSM road geometries (roughly 2km across) through `/api/streets?zone=<id>`, cached for 24h. Roads are gray until the selected area's model has effective sample size >=12. Parking road colors: green >=60% reported success, amber 35–59%, red <35%. **Every street in an overlay carries the area prediction, not a street-level calibrated prediction.** No fictitious road coordinates or live occupancy are generated.
+
+The traffic layer uses a separate contextual Dirichlet(1,1,1) model over normal/slow/congested user reports, 14-day evidence half-life, 90-day horizon, same weekend/hour neighborhood. Color is based on expected normalized severity: green <=.35, amber <=.65, red >.65. This is a time-of-day pattern learned from reports, not a real-time speed feed. No traffic accuracy metric is claimed. Traffic observations have separate SQLite storage and device-local export/import.

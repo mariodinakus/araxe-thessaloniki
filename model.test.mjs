@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {predict,metrics,mergeEvents,context} from './public/model.js';
+import {predict,metrics,mergeEvents,context,predictTraffic} from './public/model.js';
 const now=Date.parse('2026-10-21T10:00:00Z');
 function sample(n,outcome=1){return Array.from({length:n},(_,i)=>({id:String(i),zone:'center',outcome,at:now-(i+1)*7*86400000}));}
 test('cold start does not claim trained probability',()=>{const p=predict('center',[],now,now);assert.equal(p.ready,false);assert.equal(p.n,0);});
@@ -9,3 +9,5 @@ test('opposite outcomes change predictions and future data is excluded',()=>{con
 test('Athens daylight saving and weekend context',()=>{assert.equal(context(now).hour,13);assert.equal(context(Date.parse('2026-10-24T10:00Z')).weekend,true);assert.equal(context(Date.parse('2026-11-02T10:00Z')).hour,12);});
 test('prequential evaluation never trains on current/future labels',()=>{assert.deepEqual(metrics(sample(1)),{evaluated:0,brier:null,baseline:null});const e=Array.from({length:35},(_,i)=>({id:String(i),zone:'center',outcome:i%2,at:now-100000+i*1000}));const m=metrics(e);assert.ok(m.evaluated>0);assert.ok(m.brier>=0&&m.brier<=1);assert.equal(m.baseline,.25);assert.deepEqual(metrics([...e].reverse()),m);});
 test('merging personal and shared observations does not double count',()=>{const a=sample(3);assert.equal(mergeEvents(a,a).length,3);});
+
+test('traffic model learns separate congestion classes and hides cold start',()=>{assert.equal(predictTraffic('center',[],now,now).ready,false);const e=Array.from({length:20},(_,i)=>({id:'t'+i,zone:'center',outcome:2,at:now-1000-i*1000}));const p=predictTraffic('center',e,now,now);assert.equal(p.ready,true);assert.ok(p.probabilities[2]>.85);assert.equal(predictTraffic('toumba',e,now,now).ready,false);});

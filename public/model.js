@@ -30,3 +30,8 @@ export function metrics(events) {
  return {evaluated:n,brier:n?sum/n:null,baseline:n?.25:null};
 }
 export function mergeEvents(...groups){return [...new Map(groups.flat().map(e=>[e.id,e])).values()].sort((a,b)=>a.at-b.at).slice(-10000);}
+export function predictTraffic(zoneId,events,at=Date.now(),now=Date.now()) {
+ const c=context(at);const bins=[1,1,1];let weight=0,n=0;
+ for(const e of events){if(e.zone!==zoneId||e.at>now||e.at<now-90*86400000||![0,1,2].includes(e.outcome))continue;const ec=context(e.at);let delta=Math.abs(c.hour-ec.hour);delta=Math.min(delta,24-delta);if(ec.weekend!==c.weekend||delta>2)continue;const w=Math.pow(.5,(now-e.at)/(14*86400000))*(delta===0?1:delta===1?.65:.3);bins[e.outcome]+=w;weight+=w;n++;}
+ const probabilities=bins.map(v=>v/(3+weight));return {probabilities,n,effective:weight,ready:weight>=12,score:(probabilities[1]+2*probabilities[2])/2};
+}
