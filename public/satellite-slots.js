@@ -100,3 +100,29 @@ export function newestHistoricalMarkers(scans,zone,limit=100){
  return scene.items.filter(x=>Number.isFinite(x.probabilityClear)&&x.probabilityClear>=.8&&Number.isFinite(x.lat)&&Number.isFinite(x.lon)).slice(0,limit)
  .map(x=>({...x,date:scene.date,observationType:'historical-visual-candidate-not-live'}));
 }
+
+/* Self-supervised historic-scene comparison: no occupied/free pseudo-labels. */
+export const APPEARANCE_KEY='araxe-curb-appearance-v1';
+export function compareDatedAppearance(scenes){
+ const observations=new Map();
+ for(const scene of Array.isArray(scenes)?scenes:[]){
+  if(!scene||!Array.isArray(scene.patches)||!scene.date||!scene.zone)continue;
+  for(const p of scene.patches){
+   if(!Array.isArray(p.features)||p.features.length!==84||!p.features.every(Number.isFinite))continue;
+   const key=[scene.zone,p.roadId,Math.round(p.lat*100000),Math.round(p.lon*100000)].join(':');
+   const group=observations.get(key)||{zone:scene.zone,roadName:p.roadName,lat:p.lat,lon:p.lon,series:[]};
+   if(!group.series.some(x=>x.date===scene.date))group.series.push({date:scene.date,features:p.features});
+   observations.set(key,group);
+  }
+ }
+ const comparisons=[];
+ for(const group of observations.values()){
+  if(group.series.length<2)continue;
+  const a=group.series[0].features,b=group.series.at(-1).features;
+  const distance=Math.sqrt(a.reduce((total,v,i)=>total+(v-b[i])**2,0)/84);
+  comparisons.push({zone:group.zone,roadName:group.roadName,lat:group.lat,lon:group.lon,
+   dates:group.series.map(x=>x.date),n:group.series.length,visualDifference:+distance.toFixed(4),
+   evidence:'appearance-change-only-not-free-space'});
+ }
+ return comparisons.sort((a,b)=>b.visualDifference-a.visualDifference);
+}
