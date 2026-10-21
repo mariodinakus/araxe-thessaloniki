@@ -1,5 +1,5 @@
 import {zones} from './model.js';
-import {SLOT_KEY,SCAN_KEY,sampleCurbCandidates,validCurbLabels,classifyHistoricalCurb,groupCurbHistory,pixelForCoordinate} from './satellite-slots.js';
+import {SLOT_KEY,SCAN_KEY,APPEARANCE_KEY,sampleCurbCandidates,validCurbLabels,classifyHistoricalCurb,groupCurbHistory,compareDatedAppearance,pixelForCoordinate} from './satellite-slots.js';
 import {extractImageFeatures,trainVisualModel,predictPatch,webMercatorTile,acquisitionDate,validSamples,updateSceneProfile} from './aerial-ml.js';
 
 const $=id=>document.getElementById(id);
@@ -61,8 +61,8 @@ function patch(x,y){
 function curbStatus(){
  curbModel=trainVisualModel(curbLabels);
  const unique=[...new Set(curbLabels.map(x=>x.scene))].length;
- const scanned=Array.isArray(curbScans)?curbScans:[],historic=groupCurbHistory(scanned);
- $('curbStats').textContent=`${curbCandidates.length} υποψήφια σημεία κοντά σε δρόμους · ${curbLabels.length} επισημάνσεις σε ${unique} ιστορικές λήψεις · ${scanned.length} σαρωμένες λήψεις · ${historic.filter(x=>x.changeEvidence!==null).length} συγκρίσιμες θέσεις μεταξύ ημερομηνιών. ${curbModel.ready?'Το εκπαιδευμένο μοντέλο ξεπέρασε το baseline σε ανεξάρτητη λήψη.':'Χρειάζεται εκπαίδευση από ≥3 διαφορετικές εικόνες με οχήματα και οπτικά κενά.'}`;
+ const scanned=Array.isArray(curbScans)?curbScans:[],historic=groupCurbHistory(scanned),appearance=compareDatedAppearance(read(APPEARANCE_KEY,[]));
+ $('curbStats').textContent=`${curbCandidates.length} υποψήφια σημεία κοντά σε δρόμους · ${curbLabels.length} επισημάνσεις σε ${unique} ιστορικές λήψεις · ${scanned.length} σαρωμένες λήψεις · ${historic.filter(x=>x.changeEvidence!==null).length} συγκρίσιμες ταξινομήσεις · ${appearance.length} σημεία με οπτική σύγκριση διαφορετικών παλιών ημερομηνιών. ${curbModel.ready?'Το εκπαιδευμένο μοντέλο ξεπέρασε το baseline σε ανεξάρτητη λήψη.':'Χρειάζεται εκπαίδευση από ≥3 διαφορετικές εικόνες με οχήματα και οπτικά κενά.'}`;
  $('curbScan').disabled=!curbModel.ready||!photo?.geo||!curbCandidates.length;
  $('curbScanArchive').disabled=!curbModel.ready||archive.length<2;
 }
@@ -73,8 +73,21 @@ async function loadCurbCandidates(meta){
  if(seq!==imageRequest||photo?.id!==meta.id)return;
  curbCandidates=sampleCurbCandidates(body.roads||[],meta.geo,{width:source.width,height:source.height,limit:220})
    .filter(p=>!meta.availableTiles||meta.availableTiles.has(Math.floor(p.x/256)+':'+Math.floor(p.y/256)));
+ recordHistoricAppearance(meta);
  redraw();curbStatus();
  notice(curbCandidates.length?`Βρέθηκαν ${curbCandidates.length} γεωαναφερμένα υποψήφια τμήματα δίπλα σε δρόμους. Κάνε κλικ σε κίτρινο σημείο για πραγματική ετικέτα σε ιστορική λήψη.`:'Δεν εντοπίστηκαν διαθέσιμα τμήματα δρόμων μέσα στα εικονοστοιχεία αυτής της λήψης.');
+}
+function recordHistoricAppearance(meta){
+ if(!meta?.geo||!meta.licenseVerified||!meta.date||!curbCandidates.length)return;
+ try{
+  const current=read(APPEARANCE_KEY,[]),patches=curbCandidates.slice(0,120).map(p=>{
+   const features=extractCurbFeatures(p);
+   return features?{roadId:p.roadId,roadName:p.roadName,lat:p.lat,lon:p.lon,features:features.map(x=>+x.toFixed(3))}:null;
+  }).filter(Boolean);
+  if(!patches.length)return;
+  const revised=[...current.filter(x=>x.scene!==meta.id),{scene:meta.id,date:meta.date,zone:meta.zone,patches}].slice(-8);
+  store(APPEARANCE_KEY,revised);
+ }catch(e){notice('Τοπική αποθήκευση ιστορικής σύγκρισης: '+e.message);}
 }
 function labelCurbAt(x,y){
  if(!photo?.geo||!photo.date)return notice('Η εκπαίδευση θέσεων απαιτεί ιστορική γεωαναφερμένη εικόνα με ημερομηνία.');
