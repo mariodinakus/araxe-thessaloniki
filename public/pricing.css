@@ -1,0 +1,11 @@
+.tariff-panel{margin:14px 0 18px;background:#f2f5eb;border:1px solid var(--line);padding:14px;border-radius:16px}
+.tariff-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.tariff-head h3{margin:4px 0 12px;font-size:16px}
+.tariff-head label{display:flex;gap:5px;flex-direction:column;font-size:10px;font-weight:700}
+.tariff-head select{padding:7px;border:1px solid var(--line);border-radius:9px;font-size:11px}
+.tariff-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 0;border-bottom:1px solid #dbe3d6;font-size:11px}
+.tariff-row strong{font-size:11px;display:block}.tariff-row small{font-size:9px;color:var(--muted);display:block}
+.tariff-row>div{flex:1;min-width:115px}
+.tariff-value{font-size:11px;color:var(--ink);font-weight:800;text-align:right;max-width:180px}
+.tariff-row a{font-size:9px;white-space:nowrap}
+.tariff-panel>.fine{line-height:1.55;font-size:9px;margin-top:12px}
+@media(max-width:700px){.tariff-panel{margin:12px 0;padding:12px}.tariff-row{gap:4px}.tariff-value{max-width:155px}}
