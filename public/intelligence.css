@@ -49,3 +49,30 @@
 .map-layer-buttons button{font-size:9px;padding:10px 11px;white-space:nowrap}
 .map-layer-buttons button.chosen{background:#234a3b;color:#fff;border-color:#234a3b}
 @media(max-width:700px){.map-layer-buttons{max-width:73%;overflow-x:auto;gap:4px}.map-layer-buttons button{font-size:8px;padding:8px 7px}.map-top{align-items:start}.map-label{max-width:27%;line-height:1.35}}
+
+
+/* Official Waze map is an independent view, never composited with OSM. */
+.waze-traffic-panel{position:absolute;inset:0;z-index:300;background:#f3f6f0}
+.waze-traffic-panel[hidden]{display:none}
+.waze-traffic-panel iframe{position:absolute;top:155px;bottom:75px;left:0;width:100%;height:calc(100% - 230px);border:0;background:#e6ebe5}
+.waze-live-header{position:absolute;top:0;left:0;right:0;height:155px;padding:13px 17px 12px;background:#f8faf7;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;border-bottom:1px solid #dde4d9}
+.waze-live-header>div{display:flex;flex-direction:column;gap:5px;max-width:65%}
+.waze-live-header strong{font-size:13px;font-weight:800;line-height:1.35}
+.waze-live-header span{font-size:10px;color:#61786d}
+.waze-live-header button{padding:9px;font-size:10px}
+.waze-live-footer{position:absolute;bottom:0;left:0;right:0;min-height:75px;background:#f8faf7;padding:9px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #dde4d9}
+.waze-live-footer span{font-size:9px;line-height:1.5;max-width:52%;color:#657a70}
+.waze-live-footer>div{display:flex;flex-wrap:wrap;gap:8px}
+.waze-live-footer a{font-size:10px;font-weight:800;text-decoration:none}
+.map-panel.traffic-live .road-switch{z-index:600}
+.map-panel.traffic-live .map-top,.map-panel.traffic-live .map-legend,.map-panel.traffic-live .map-bottom,.map-panel.traffic-live .imagery-notice{display:none!important}
+.map-panel.traffic-live #map{visibility:hidden}
+@media(max-width:700px){
+ .waze-traffic-panel iframe{top:137px;bottom:96px;height:calc(100% - 233px)}
+ .waze-live-header{height:137px;padding:9px 12px}
+ .waze-live-header strong{font-size:11px}
+ .waze-live-header>div{max-width:62%}
+ .waze-live-footer{min-height:96px;flex-wrap:wrap;gap:6px;padding:8px 12px}
+ .waze-live-footer span{max-width:none;width:100%;font-size:8px}
+ .waze-live-footer a{font-size:10px}
+}
