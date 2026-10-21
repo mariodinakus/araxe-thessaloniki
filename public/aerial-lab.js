@@ -111,7 +111,7 @@ async function autoCheck(){
 function displayLast(){const latest=read(LAST,null);$('aerialLast').textContent=latest?`Τελευταία αυτόματη ανάλυση: ${latest.date||'χωρίς ημερομηνία'} · περιοχή ${latest.zone} · ${latest.visual?.high||0} από ${latest.visual?.total||0} τμήματα με πιθανή παρουσία οχήματος (μη επαληθευμένο).`:'Δεν έχει πραγματοποιηθεί αυτόματη ανάλυση νέας εικόνας.';}
 export function openAerialLab(zoneId=null){
  if(!$('aerialLab'))return;
- $('aerialZone').value=zones.some(z=>z.id===(window.araxeSelectedArea||''))?window.araxeSelectedArea:'menemeni';
+ $('aerialZone').value=zones.some(z=>z.id===zoneId)?zoneId:'menemeni';
  displayLast();status();$('aerialLab').showModal();
 }
 export function setupAerialLab(){
