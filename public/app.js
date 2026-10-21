@@ -84,7 +84,7 @@ function initMap(){if(!window.L){$('mapError').hidden=false;return;}map=L.map('m
  if(openVisible){map.removeLayer(openImagery);openVisible=false;$('oamLayer').classList.remove('chosen');}
  satellite=!satellite;
  $('imageryNotice').hidden=!satellite;
- if(satellite){map.removeLayer(street);imagery.addTo(map);toast('Δορυφορικό υπόβαθρο Esri: εικόνα αρχείου, όχι live ανίχνευση θέσεων.');}
+ if(satellite){map.removeLayer(street);imagery.addTo(map);$('imageryNotice').textContent='Esri · εικόνα αρχείου άγνωστης ημερομηνίας, χωρίς δικαίωμα αυτόματης ανάλυσης εικόνων. Δεν επιβεβαιώνει κενές θέσεις.';toast('Δορυφορικό υπόβαθρο Esri: εικόνα αρχείου, όχι live ανίχνευση θέσεων.');}
  else{map.removeLayer(imagery);street.addTo(map);}
  $('layers').textContent=satellite?'▧ Οδικός χάρτης':'▧ Δορυφορικός';
  if(roadLines)roadLines.eachLayer(l=>l.setStyle({opacity:satellite?.55:.9,weight:satellite?4:5}));
