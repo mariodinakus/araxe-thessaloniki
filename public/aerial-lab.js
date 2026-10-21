@@ -105,9 +105,9 @@ function extractCurbFeatures(p){
  const size=40,cx=Math.max(0,Math.min(source.width-size,Math.round(p.x-size/2))),
  cy=Math.max(0,Math.min(source.height-size,Math.round(p.y-size/2)));
  const pixels=raw.getImageData(cx,cy,size,size);
- let opaque=0;
- for(let i=3;i<pixels.data.length;i+=4)if(pixels.data[i]>=245)opaque++;
- return opaque>=size*size*.96?extractImageFeatures(pixels):null;
+ let opaque=0,black=0;
+ for(let i=0;i<pixels.data.length;i+=4){if(pixels.data[i+3]>=245)opaque++;if(pixels.data[i]<8&&pixels.data[i+1]<8&&pixels.data[i+2]<8)black++;}
+ return opaque>=size*size*.96&&black<size*size*.8?extractImageFeatures(pixels):null;
 }
 function analyzeCurbs(){
  if(!photo?.geo||!curbCandidates.length)return notice('Δεν υπάρχουν γεωαναφερμένα δείγματα δρόμων σε αυτή την εικόνα.');
