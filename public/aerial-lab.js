@@ -65,6 +65,7 @@ function curbStatus(){
  $('curbStats').textContent=`${curbCandidates.length} υποψήφια σημεία κοντά σε δρόμους · ${curbLabels.length} επισημάνσεις σε ${unique} ιστορικές λήψεις · ${scanned.length} σαρωμένες λήψεις · ${historic.filter(x=>x.changeEvidence!==null).length} συγκρίσιμες ταξινομήσεις · ${appearance.length} σημεία με οπτική σύγκριση διαφορετικών παλιών ημερομηνιών. ${curbModel.ready?'Το εκπαιδευμένο μοντέλο ξεπέρασε το baseline σε ανεξάρτητη λήψη.':'Χρειάζεται εκπαίδευση από ≥3 διαφορετικές εικόνες με οχήματα και οπτικά κενά.'}`;
  $('curbScan').disabled=!curbModel.ready||!photo?.geo||!curbCandidates.length;
  $('curbScanArchive').disabled=!curbModel.ready||archive.length<2;
+ $('curbCompare').disabled=archive.length<2;
 }
 async function loadCurbCandidates(meta){
  const seq=++imageRequest,resp=await fetch('/api/streets?zone='+encodeURIComponent(meta.zone));
@@ -132,6 +133,24 @@ function analyzeCurbs(){
   +roadRows.map(([name,v])=>'<div>'+safe(name)+' · '+v.clear+'/'+v.n+' οπτικά πιθανά κενά</div>').join('');
  curbStatus();
  notice('Η γεωαναφερμένη εικόνα εξετάστηκε. Πράσινοι κύκλοι = μοντέλο πιθανού οπτικού κενού στην ΗΜΕΡΟΜΗΝΙΑ ΛΗΨΗΣ, όχι σήμερα.');
+}
+async function compareHistoricArchive(){
+ if(archive.length<2)return notice('Για ιστορική σύγκριση απαιτούνται τουλάχιστον δύο διαφορετικές λήψεις.');
+ const button=$('curbCompare');button.disabled=true;let loaded=0;
+ try{
+  for(const f of archive.slice(0,5)){
+   try{
+    notice('Αυτοεκπαίδευση από παλιές εικόνες: '+(loaded+1)+' / έως '+Math.min(archive.length,5));
+    await loadOam({feature:f,zone:zones.find(x=>x.id===$('aerialZone').value)},true);
+    if(photo?.geo){await loadCurbCandidates(photo);loaded++;}
+   }catch(e){notice('Μία ιστορική λήψη δεν διαβάζεται: '+e.message);}
+  }
+  const changes=compareDatedAppearance(read(APPEARANCE_KEY,[])).filter(x=>x.zone===$('aerialZone').value);
+  $('curbResult').innerHTML='<strong>'+loaded+' παλιές λήψεις ελέγχθηκαν · '+changes.length+' συγκρίσιμα τμήματα δρόμων</strong>'
+   +'<p>Οι οπτικές μεταβολές (π.χ. όχημα, σκιά, δέντρο) δεν αποδεικνύουν ότι υπήρχε νόμιμη κενή θέση.</p>'
+   +changes.slice(0,8).map(x=>'<div>'+safe(x.roadName)+' · αλλαγή εικόνας '+x.visualDifference.toFixed(3)+' · '+safe(x.dates.join(', '))+'</div>').join('');
+  notice('Η αυτόματη σύγκριση εικόνων ολοκληρώθηκε. Χρειάζονται ετικέτες σε διαφορετικές λήψεις πριν ταξινομήσουμε οπτικά κενά.');
+ }finally{curbStatus();}
 }
 async function scanHistoricArchive(){
  if(!curbModel.ready)return notice('Πρώτα απαιτείται επαληθευμένη εκπαίδευση σε ανεξάρτητες ιστορικές λήψεις.');
@@ -269,6 +288,7 @@ export function setupAerialLab(){
  $('curbLoad').onclick=async()=>{const i=Number($('curbScenes').value);if(!archive[i])return notice('Δεν υπάρχει διαθέσιμη λήψη.');try{await loadOam({feature:archive[i],zone:zones.find(a=>a.id===z.value)});}catch(e){notice(e.message);}};
  $('curbScan').onclick=analyzeCurbs;
  $('curbScanArchive').onclick=scanHistoricArchive;
+ $('curbCompare').onclick=compareHistoricArchive;
 
  $('aerialWatch').checked=read(WATCH,false);
  $('aerialWatch').onchange=e=>{store(WATCH,e.target.checked);notice(e.target.checked?'Ο έλεγχος γίνεται ανά 6 ώρες όσο η εφαρμογή παραμένει ανοιχτή. Δεν εκτελείται όταν κλείσεις τον browser.':'Ο περιοδικός έλεγχος απενεργοποιήθηκε.');if(e.target.checked)autoCheck();};
