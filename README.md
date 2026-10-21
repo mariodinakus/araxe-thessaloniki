@@ -14,7 +14,7 @@ Open http://localhost:3000. Render configuration is in `render.yaml`; select a f
 
 ## What works
 
-- 29 named areas from Sindos/Oreokastro to Thermi/Perea; this is metropolitan coverage, not an exhaustive street inventory.
+- 42 named areas from Sindos/Oreokastro to Thermi/Perea; this is metropolitan coverage, not an exhaustive street inventory.
 - OpenStreetMap parking inventory across bbox 40.48,22.78,40.76,23.15 from Overpass. Cached six hours, stale data labeled; no invented fallback inventory. If providers fail, areas still work and the inventory says unavailable. OSM data ODbL, © OpenStreetMap contributors.
 - Filters for access, recorded fee and disabled spaces; unknown values remain unknown. Private/customer/permit-only facilities excluded from public results. No assumption that mapped parking is free or has empty spaces.
 - Browser GPS, Google Maps navigation, device-local saved car, installable PWA shell, optional Esri imagery background (not live, unknown capture date).
@@ -49,3 +49,17 @@ See `model.test.mjs` for cold-start, learning, decay, deduplication, timezone an
 Selecting an area loads actual OSM road geometries (roughly 2km across) through `/api/streets?zone=<id>`, cached for 24h. Roads are gray until the selected area's model has effective sample size >=12. Parking road colors: green >=60% reported success, amber 35–59%, red <35%. **Every street in an overlay carries the area prediction, not a street-level calibrated prediction.** No fictitious road coordinates or live occupancy are generated.
 
 The traffic layer uses a separate contextual Dirichlet(1,1,1) model over normal/slow/congested user reports, 14-day evidence half-life, 90-day horizon, same weekend/hour neighborhood. Color is based on expected normalized severity: green <=.35, amber <=.65, red >.65. This is a time-of-day pattern learned from reports, not a real-time speed feed. No traffic accuracy metric is claimed. Traffic observations have separate SQLite storage and device-local export/import.
+
+## Private daily parking tools
+
+Favorites, workplace address, chosen work/center areas, own plate, front/back vehicle plates, floor/bay, notes, optional expiry and user-entered hourly rate stay in localStorage. Front/back photos stay only in browser IndexedDB (up to 12MB each); no upload endpoint exists. Ending a parking session deletes surrounding plates, notes, saved location and photos; own plate and favorites are retained. The timer works in the foreground, not as background push. Cost is elapsed time times the user-entered rate, not an official tariff calculation. These notes/photos are not collision avoidance or distance sensing. Center coverage now includes Valaoritou, Dioikitirio, Roman Forum, Agias Sofias, Navarinou, Agiou Dimitriou, Port, Emporiou, Venizelou/Egnatia, Tsimiski, Aggelaki, Archaeological Museum and Mitropoleos. Coordinates are area centroids, not surveyed individual parking places.
+
+## Three parking estimators
+
+`public/ensemble.js` combines contextual Bayesian estimation (50%), genuine online SGD logistic regression (30%) and up to 25 nearest similar observations (20%). Logistic features include cyclic hour, weekend, zone and named street; older evidence is downweighted. Coefficients and neighbor estimates rebuild deterministically from available observations, then update as reports arrive. Weights are design defaults, not empirically optimized. Individual outputs and disagreement are available; only Bayesian prequential Brier is evaluated in this version. No comparative accuracy claim is made for the ensemble. Probabilities remain hidden until contextual evidence is sufficient.
+
+A named street gets its own model only with sufficient local evidence; otherwise the area model is explicitly labeled as a transfer estimate. Public road reports carry a stable zone+street-name hash, never private plate notes or photos. Street candidates exclude obvious primary/trunk/motorway classes and known no-parking tags, but map data do not establish permission to park. Unknown-signage roads are candidates to inspect, never confirmed legal bays. Without observations, candidate ordering is distance from area center, not a fabricated probability.
+
+## Bundled geographic snapshot
+
+`snapshots/city.json.gz` contains a deduplicated metro parking inventory and road geometry, derived from real OpenFreeMap vector tiles, release 2026-10-18. Includes OpenStreetMap data, © OpenStreetMap contributors, © OpenMapTiles, OpenFreeMap. Geographic database derivative distributed under ODbL 1.0: https://opendatacommons.org/licenses/odbl/1-0/ . This is map inventory, **not parking occupancy or training labels**. It lets the app work when Overpass is unavailable. Snapshot road geometry is served by selected area immediately; parking inventory may refresh separately when a provider responds. Layer and UI show map source date. No API key or account is needed: https://openfreemap.org/ .
