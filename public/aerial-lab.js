@@ -190,7 +190,7 @@ async function discover(zoneId,quiet=false){
  const body=await response.json();const items=(Array.isArray(body.features)?body.features:[]).filter(f=>f.id&&intersects(f,z.lat,z.lon)&&acquisitionDate(f));
  items.sort((a,b)=>acquisitionDate(b).localeCompare(acquisitionDate(a)));
  const eligible=items.filter(f=>{
-  const g=Number(f.properties?.gsd),license=String(f.properties?.license||f.properties?.['oam:license']||'CC-BY-4.0').toUpperCase();
+  const g=Number(f.properties?.gsd),license=String(f.properties?.license||f.properties?.['oam:license']||'').toUpperCase();
   return Number.isFinite(g)&&g>0&&g<=.5&&['CC-BY-4.0','CC-BY-SA-4.0','CC-BY'].includes(license);
  });
  archive=eligible.sort((a,b)=>{
