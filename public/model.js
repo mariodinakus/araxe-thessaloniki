@@ -1,8 +1,10 @@
 // Model v1: contextual Beta-Binomial with 45-day evidence half-life.
 export const zones = [
- ['menemeni','Μενεμένη',40.658,22.899,'residential'],['evosmos','Εύοσμος',40.670,22.908,'residential'],['kordelio','Κορδελιό',40.669,22.894,'residential'],['ampelokipoi','Αμπελόκηποι',40.655,22.921,'residential'],['stavroupoli','Σταυρούπολη',40.669,22.938,'residential'],['polichni','Πολίχνη',40.667,22.950,'residential'],['neapoli','Νεάπολη',40.654,22.943,'residential'],['sykies','Συκιές',40.651,22.956,'residential'],['efkarpia','Ευκαρπία',40.689,22.954,'residential'],['oreokastro','Ωραιόκαστρο',40.730,22.917,'residential'],['sindos','Σίνδος',40.671,22.807,'residential'],['diavata','Διαβατά',40.688,22.857,'residential'],['station','Νέος Σιδηροδρομικός Σταθμός',40.644,22.930,'mixed'],['vardaris','Βαρδάρης',40.640,22.936,'mixed'],['ladadika','Λαδάδικα',40.635,22.936,'nightlife'],['center','Αριστοτέλους · Κέντρο',40.634,22.944,'center'],['rotonta','Ροτόντα · Καμάρα',40.634,22.953,'center'],['anopoli','Άνω Πόλη',40.642,22.956,'residential'],['universities','Πανεπιστήμια · ΔΕΘ',40.628,22.960,'mixed'],['white','Λευκός Πύργος',40.626,22.948,'center'],['faliro','Φάληρο',40.614,22.959,'residential'],['toumba','Τούμπα',40.613,22.977,'residential'],['charilaou','Χαριλάου',40.600,22.976,'residential'],['depο','Ντεπώ',40.597,22.963,'residential'],['kalamaria','Καλαμαριά',40.582,22.952,'mixed'],['pylaia','Πυλαία',40.600,22.999,'residential'],['panorama','Πανόραμα',40.587,23.034,'residential'],['thermi','Θέρμη',40.547,23.020,'residential'],['perea','Περαία',40.499,22.929,'mixed']
+ ['menemeni','Μενεμένη',40.658,22.899,'residential'],['evosmos','Εύοσμος',40.670,22.908,'residential'],['kordelio','Κορδελιό',40.669,22.894,'residential'],['ampelokipoi','Αμπελόκηποι',40.655,22.921,'residential'],['stavroupoli','Σταυρούπολη',40.669,22.938,'residential'],['polichni','Πολίχνη',40.667,22.950,'residential'],['neapoli','Νεάπολη',40.654,22.943,'residential'],['sykies','Συκιές',40.651,22.956,'residential'],['efkarpia','Ευκαρπία',40.689,22.954,'residential'],['oreokastro','Ωραιόκαστρο',40.730,22.917,'residential'],['sindos','Σίνδος',40.671,22.807,'residential'],['diavata','Διαβατά',40.688,22.857,'residential'],['station','Νέος Σιδηροδρομικός Σταθμός',40.644,22.930,'mixed'],['vardaris','Βαρδάρης',40.640,22.936,'mixed'],['ladadika','Λαδάδικα',40.635,22.936,'nightlife'],['center','Αριστοτέλους · Κέντρο',40.634,22.944,'center'],['rotonta','Ροτόντα · Καμάρα',40.634,22.953,'center'],['anopoli','Άνω Πόλη',40.642,22.956,'residential'],['universities','Πανεπιστήμια · ΔΕΘ',40.628,22.960,'mixed'],['white','Λευκός Πύργος',40.626,22.948,'center'],['faliro','Φάληρο',40.614,22.959,'residential'],['toumba','Τούμπα',40.613,22.977,'residential'],['charilaou','Χαριλάου',40.600,22.976,'residential'],['depo','Ντεπώ',40.597,22.963,'residential'],['kalamaria','Καλαμαριά',40.582,22.952,'mixed'],['pylaia','Πυλαία',40.600,22.999,'residential'],['panorama','Πανόραμα',40.587,23.034,'residential'],['thermi','Θέρμη',40.547,23.020,'residential'],['perea','Περαία',40.499,22.929,'mixed']
 ].map(([id,name,lat,lon,type])=>({id,name,lat,lon,type}));
-export function context(at=Date.now()) { const p=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Athens',weekday:'short',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date(at)).map(x=>[x.type,x.value])); return {hour:+p.hour,weekend:['Sat','Sun'].includes(p.weekday)}; }
+const formatter=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Athens',weekday:'short',hour:'numeric',hourCycle:'h23'});
+const contexts=new Map();
+export function context(at=Date.now()) { const key=Math.floor(at/3600000);if(contexts.has(key))return contexts.get(key);const p=Object.fromEntries(formatter.formatToParts(new Date(at)).map(x=>[x.type,x.value]));const c={hour:+p.hour,weekend:['Sat','Sun'].includes(p.weekday)};if(contexts.size>10000)contexts.clear();contexts.set(key,c);return c; }
 export function distance(a,b) { const r=Math.PI/180,dlat=(a.lat-b.lat)*r,dlon=(a.lon-b.lon)*r; return 6371*2*Math.asin(Math.sqrt(Math.sin(dlat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dlon/2)**2)); }
 export function nearest(point) { return [...zones].sort((a,b)=>distance(a,point)-distance(b,point))[0]; }
 export function predict(zoneId,events,at=Date.now(),now=Date.now()) {
@@ -14,5 +16,17 @@ export function predict(zoneId,events,at=Date.now(),now=Date.now()) {
  const busy=(zone.type==='center'&&c.hour>=9&&c.hour<21)||(zone.type==='nightlife'&&c.hour>=19)||(zone.type==='residential'&&(c.hour>=19||c.hour<8));
  return {p,n:count,effective:weight,ready:weight>=12,low:Math.max(0,p-1.96*sd),high:Math.min(1,p+1.96*sd),difficulty:busy?'Αυξημένη':'Μέτρια',context:c};
 }
-export function metrics(events) { let sum=0,n=0,base=0;const history=[]; for(const e of [...events].sort((a,b)=>a.at-b.at)){const p=predict(e.zone,history,e.at,e.at);if(p.ready){sum+=(p.p-e.outcome)**2;base+=(.5-e.outcome)**2;n++;}history.push(e);}return {evaluated:n,brier:n?sum/n:null,baseline:n?base/n:null}; }
+export function metrics(events) {
+ let sum=0,n=0;const buckets=new Map(),queue=[];
+ function decay(bin,at){const f=Math.pow(.5,(at-bin.at)/(45*86400000));bin.w*=f;bin.s*=f;bin.at=at;}
+ for(const e of [...events].sort((a,b)=>a.at-b.at)){
+  const c=context(e.at);const prefix=e.zone+':'+c.weekend+':';
+  while(queue.length&&queue[0].at<e.at-180*86400000){const old=queue.shift(),oc=context(old.at),key=old.zone+':'+oc.weekend+':'+oc.hour,bin=buckets.get(key);if(bin){decay(bin,e.at);const w=Math.pow(.5,(e.at-old.at)/(45*86400000));bin.w=Math.max(0,bin.w-w);bin.s=Math.max(0,bin.s-w*old.outcome);}}
+  let weight=0,success=0;
+  for(let d=-2;d<=2;d++){const hour=(c.hour+d+24)%24,bin=buckets.get(prefix+hour);if(!bin)continue;decay(bin,e.at);const hw=d===0?1:Math.abs(d)===1?.65:.3;weight+=hw*bin.w;success+=hw*bin.s;}
+  if(weight>=12){const p=(1+success)/(2+weight);sum+=(p-e.outcome)**2;n++;}
+  const key=prefix+c.hour;let bin=buckets.get(key);if(!bin){bin={at:e.at,w:0,s:0};buckets.set(key,bin);}else decay(bin,e.at);bin.w++;bin.s+=e.outcome;queue.push(e);
+ }
+ return {evaluated:n,brier:n?sum/n:null,baseline:n?.25:null};
+}
 export function mergeEvents(...groups){return [...new Map(groups.flat().map(e=>[e.id,e])).values()].sort((a,b)=>a.at-b.at).slice(-10000);}
