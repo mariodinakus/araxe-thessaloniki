@@ -89,8 +89,8 @@ async function discover(zoneId,quiet=false){
  if(!response.ok)throw Error('Ο κατάλογος OpenAerialMap δεν ανταποκρίνεται ('+response.status+').');
  const body=await response.json();const items=(Array.isArray(body.features)?body.features:[]).filter(f=>f.id&&intersects(f,z.lat,z.lon)&&acquisitionDate(f));
  items.sort((a,b)=>acquisitionDate(b).localeCompare(acquisitionDate(a)));
- const eligible=items.filter(f=>{const g=Number(f.properties?.gsd);return !Number.isFinite(g)||g<=.8;});
- if(!eligible.length){if(!quiet)notice('Δεν βρέθηκε επιβεβαιωμένα κατάλληλη ανοικτή αεροφωτογραφία που να καλύπτει το κέντρο αυτής της περιοχής. Ανέβασε εικόνα με δικαιώματα.');return null;}
+ const eligible=items.filter(f=>{const g=Number(f.properties?.gsd),license=String(f.properties?.license||f.properties?.['oam:license']||'').toUpperCase();return Number.isFinite(g)&&g>0&&g<=.8&&['CC-BY-4.0','CC-BY-SA-4.0'].includes(license);});
+ if(!eligible.length){if(!quiet)notice('Δεν βρέθηκε ανοικτή λήψη με γνωστή ημερομηνία, ανάλυση έως 0,8m/pixel και κατάλληλη άδεια CC-BY. Ανέβασε εικόνα με δικαιώματα.');return null;}
  const latest=eligible[0];lastDiscovered={feature:latest,zone:z};
  if(!quiet)notice('Βρέθηκε εικόνα OpenAerialMap: '+acquisitionDate(latest)+'. Η ύπαρξή της δεν σημαίνει πραγματικό χρόνο.');
  return lastDiscovered;
@@ -103,7 +103,7 @@ async function loadOam(record,display=true){
  const link=`https://api.imagery.hotosm.org/raster/collections/openaerialmap/items/${encodeURIComponent(feature.id)}/tiles/WebMercatorQuad/${z}/${x}/${y}?assets=visual&nodata=0`;
  const img=new Image();img.crossOrigin='anonymous';img.src=link;
  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('Η συγκεκριμένη ορθοφωτογραφία δεν μπορεί να φορτωθεί στο κέντρο της περιοχής.'));});
- if(display)setImage(img,{id:'oam:'+feature.id+':'+z+'/'+x+'/'+y,provider:'OpenAerialMap · '+(feature.properties?.providers?.[0]?.name||'OIN'),date:acquisitionDate(feature),zone:zone.id,gsd:Number.isFinite(gsd)&&gsd>0?gsd:null});
+ if(display)setImage(img,{id:'oam:'+feature.id+':'+z+'/'+x+'/'+y,provider:'OpenAerialMap · '+(feature.properties?.['oam:producer_name']||feature.providers?.[0]?.name||'OIN')+' · '+(feature.properties?.license||'άδεια μη διαθέσιμη'),date:acquisitionDate(feature),zone:zone.id,gsd:Number.isFinite(gsd)&&gsd>0?gsd:null});
  return {id:feature.id,date:acquisitionDate(feature)};
 }
 async function autoCheck(){
