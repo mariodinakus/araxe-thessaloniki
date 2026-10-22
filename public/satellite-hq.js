@@ -105,4 +105,7 @@ export function setupSatelliteHQ({onTrain,onMap}){
  $('satHQMap').onclick=()=>onMap?.(active?.id||'center');
  window.addEventListener('araxe:satellite-update',()=>active&&paint(active));
 }
-export function satelliteCatalogSnapshot(zoneId){return zoneCache.get(zoneId)?.summary||null;}
+export function satelliteCatalogSnapshot(zoneId){
+ const row=zoneCache.get(zoneId);
+ return row?.summary||row?.error?row?.summary||{error:row.error,checkedAt:row.checkedAt,scenes:[]}:null;
+}
