@@ -115,3 +115,37 @@
 .map-build-row button{flex-shrink:0;font-size:8px!important;color:#d1f3da;background:#275541;border:1px solid #608d75;border-radius:7px;padding:7px}
 .map-why{background:#214f3d;border-left:3px solid #84dcb2;border-radius:5px;padding:9px 10px;color:#d6f5df!important;font-size:9px!important}
 @media(max-width:700px){.map-build-row{flex-wrap:wrap}.map-build-row button{font-size:8px!important}.quick-map{font-size:9px!important}}
+
+
+/* Above-map Sentinel time machine. Yearly imagery is real; 10m imagery cannot identify parked cars. */
+.sat-year-bar{position:absolute;top:140px;left:16px;z-index:725;max-width:350px;width:calc(100% - 32px);background:#113a2de9;color:#e9fff0;padding:11px;border:1px solid #5c9973;border-radius:13px;backdrop-filter:blur(12px);box-shadow:0 8px 24px #092a2455;font:10px Manrope,system-ui,sans-serif}
+.sat-year-bar[hidden]{display:none}
+.sat-year-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sat-year-row strong{font-size:9px;letter-spacing:.35px;color:#d4f7dc;white-space:nowrap}
+.sat-year-led{display:inline-block;background:#69d796;box-shadow:0 0 8px #69d796;width:7px;height:7px;border-radius:50%}
+.sat-year-row label{font-size:9px;margin-left:auto;color:#aed8bb}
+.sat-year-row select{max-width:83px;min-width:70px;background:#285a44;color:white;padding:5px;border-radius:7px;border:1px solid #7aa88a;font-weight:850}
+.sat-year-status{margin:7px 0;color:#c1e6cc;line-height:1.5;font-size:9px}
+.sat-year-status.warn{color:#ffdb9b}
+.sat-year-actions{display:flex;gap:6px}
+.sat-year-actions button{flex:1;min-width:0;background:#315c45;border:1px solid #5c9c6d;border-radius:7px;color:#edffee;padding:6px 8px;font-size:9px;font-weight:800}
+.sat-year-bar small{display:block;font-size:8px;line-height:1.45;color:#99c7a9;margin-top:7px}
+@media(max-width:700px){
+ /* Crucial: show the interactive map BEFORE the oversized sidebar on phones. */
+ main{display:flex;flex-direction:column}
+ main>.map-panel{order:0;height:min(79svh,790px);min-height:560px;margin:8px 11px 12px}
+ main>aside{order:1;padding-top:12px}
+ main>.insight{order:2}
+ .map-panel .road-switch{left:8px;right:8px;top:61px;display:flex;width:auto;overflow-x:auto;white-space:nowrap;max-width:none;scrollbar-width:thin;gap:2px}
+ .map-panel .road-switch button{white-space:nowrap;flex:0 0 auto;padding:8px;font-size:9px}
+ .sat-year-bar{top:119px;left:8px;right:8px;width:auto;max-width:none;padding:9px}
+ .sat-year-row strong{font-size:8px}
+ .sat-year-row label{font-size:8px}
+ .sat-year-bar small{font-size:7.5px}
+ .history-map-panel{max-height:28%;bottom:61px;left:8px;right:8px;width:auto;padding:8px}
+ .history-map-stats{margin:5px 0}
+ .history-map-stats span{padding:5px;font-size:8px}
+ .history-map-panel .history-map-actions{gap:4px}
+ .history-map-panel .history-map-actions button{padding:7px;font-size:8px}
+ .map-legend{display:none}
+}
