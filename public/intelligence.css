@@ -76,3 +76,48 @@
  .waze-live-footer span{max-width:none;width:100%;font-size:8px}
  .waze-live-footer a{font-size:10px}
 }
+
+
+/* Model-comparison lab: no forecast value is displayed without outcome evidence. */
+.forecast-lab{background:#ecf3ec;border:1px solid #d3e3d7;border-radius:13px;margin:15px -4px 10px;padding:14px}
+.forecast-hero{display:flex;align-items:center;gap:12px;background:white;border:1px solid #dce7dd;border-radius:11px;padding:13px;margin-bottom:14px}
+.forecast-hero>strong{font-size:31px;min-width:67px;color:#235b40;font-variant-numeric:tabular-nums;letter-spacing:-1px}
+.forecast-hero>div{display:flex;flex-direction:column;gap:5px}
+.forecast-hero b{font-size:10px;line-height:1.35}.forecast-hero span{font-size:9px;color:#637a6d;line-height:1.45}
+.forecast-model-bars{display:flex;flex-direction:column;gap:10px;padding:5px 0 12px}
+.forecast-model-row{display:grid;grid-template-columns:110px minmax(0,1fr) 33px 55px;align-items:center;gap:6px}
+.forecast-model-row span{font-size:9px;font-weight:700}
+.forecast-model-row strong{font-size:11px;text-align:right;font-variant-numeric:tabular-nums}
+.forecast-model-row small{font-size:8px;color:#728479;text-align:right}
+.forecast-model-track{height:8px;border-radius:6px;background:#d5e1da;overflow:hidden}
+.forecast-model-track div{height:100%;background:#4c9671;border-radius:6px;transition:width .2s}
+.forecast-reliability{background:#fff;border:1px solid #dce7dd;padding:12px;border-radius:10px;font-size:9px;line-height:1.6}
+.forecast-reliability>strong{font-size:10px}
+.forecast-backtest{display:flex;gap:9px;justify-content:space-between;margin:7px 0;border-bottom:1px solid #e5ece6;padding-bottom:7px}
+.forecast-backtest b{color:#265d47}
+.forecast-reliability small{font-size:8px;color:#567062;line-height:1.6}
+.forecast-reliability p{font-size:9px;color:#526b60;margin:6px 0 0}
+.forecast-future{margin-top:14px}
+.forecast-future>strong{font-size:10px}
+.forecast-horizon{display:flex;gap:5px;justify-content:space-around;margin:11px 0 5px;padding:10px 8px;background:#fff;border-radius:9px}
+.forecast-hour{display:flex;flex:1;flex-direction:column;align-items:center;gap:5px;min-width:0;font-size:9px}
+.forecast-hour>div{height:65px;border-bottom:1px solid #dce7df;display:flex;align-items:flex-end;width:100%;justify-content:center}
+.forecast-hour i{width:18px;max-width:60%;display:block;background:#468b67;border-radius:4px 4px 0 0;min-height:0}
+.forecast-hour b{font-size:9px}.forecast-hour span{font-size:9px;font-variant-numeric:tabular-nums}
+.smart-detail{display:flex;align-items:center;gap:14px;border-radius:12px;background:#eef5ed;padding:14px;margin:14px 0}
+.smart-detail>div:first-child{min-width:110px;text-align:center}
+.smart-detail strong{display:block;font-size:26px;color:#276344;font-variant-numeric:tabular-nums}
+.smart-detail span{font-size:9px;display:block;color:#517262;line-height:1.5}
+.smart-detail b{display:block;font-size:13px}.smart-detail small{font-size:9px;color:#617e6b;line-height:1.55}
+@media(max-width:700px){.forecast-lab{padding:10px;margin:12px 0}.forecast-model-row{grid-template-columns:90px minmax(0,1fr) 27px 46px;gap:4px}.forecast-model-row span{font-size:8px}.forecast-model-row small{font-size:7px}.forecast-hero>strong{font-size:27px}.forecast-backtest{flex-wrap:wrap}.smart-detail{padding:10px}.smart-detail>div:first-child{min-width:80px}}
+
+
+.sat-model{padding:10px 12px;background:#edf4ee;border-radius:10px;border:1px solid #d9e7da;margin:12px 0;font-size:9px;line-height:1.6}
+.sat-model strong{font-size:10px;display:block;margin-bottom:8px}
+.sat-model-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:7px 0 10px}
+.sat-model-kpis span{font-size:8px;line-height:1.5;padding:7px;background:white;border-radius:7px}
+.sat-model-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #d8e5da}
+.sat-model-row span{flex:1;font-size:9px}
+.sat-model-row b{color:#255e40;font-variant-numeric:tabular-nums;font-size:9px}
+.sat-model-row small{font-size:8px;color:#6c796e}
+.sat-model>small{font-size:8px;display:block;margin-top:9px;line-height:1.6}

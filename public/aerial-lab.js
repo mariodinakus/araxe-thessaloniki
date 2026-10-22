@@ -251,17 +251,36 @@ async function loadOam(record,display=true){
  }
  return {id:feature.id,date,tiles:loaded.size};
 }
+const SYNC_TIME='araxe-satellite-scan-schedule-v2';
 async function autoCheck(){
- if(!read(WATCH,false)||scanBusy||!(model.ready||curbModel.ready))return;
- scanBusy=true;try{
-  const zoneId=$('aerialZone').value||'menemeni',found=await discover(zoneId,true);if(!found)return;
-  const stamp=zoneId+':'+found.feature.id,previous=read(LAST,null);
-  if(previous?.stamp===stamp)return;
-  await loadOam(found,true);if(photo?.geo&&curbModel.ready){await loadCurbCandidates(photo);analyzeCurbs();}const visual=model.ready?analyze(false):null;
-  store(LAST,{stamp,zone:zoneId,date:acquisitionDate(found.feature),at:Date.now(),visual});
-  notice('Νέα αρχειακή αεροφωτογραφία αναλύθηκε κατά την παραμονή σου στην εφαρμογή. Η ένδειξη αφορά την ημερομηνία λήψης.');
- }catch(e){notice('Αυτόματος οπτικός έλεγχος: '+e.message);}
- finally{scanBusy=false;displayLast();}
+ if(!read(WATCH,true)||scanBusy||document.hidden)return;
+ const zoneId=$('aerialZone').value||'menemeni',last=read(SYNC_TIME,{});
+ // Avoid hammering catalog/raster endpoints after a reload. User can force discovery.
+ if(Number.isFinite(last[zoneId])&&Date.now()-last[zoneId]<6*3600000)return;
+ scanBusy=true;let scanned=0;
+ try{
+  const recent={...last,[zoneId]:Date.now()};
+  store(SYNC_TIME,recent);
+  const available=await discover(zoneId,true);
+  if(!available){notice('Δεν υπάρχουν κατάλληλες χρονολογημένες δορυφορικές λήψεις για αυτόματη εκπαίδευση στην περιοχή.');return;}
+  // Self-supervised learning does not require any manually annotated vehicle labels.
+  const captures=archive.slice(0,Math.min(2,archive.length)),area=zones.find(x=>x.id===zoneId);
+  const known=new Set(read(APPEARANCE_KEY,[]).filter(x=>x.zone===zoneId).map(x=>x.scene));
+  for(const f of captures){
+   const scene='oam:'+f.id+':19/'+webMercatorTile(area.lat,area.lon,19).x+'/'+webMercatorTile(area.lat,area.lon,19).y;
+   if(known.has(scene))continue;
+   try{
+    await loadOam({feature:f,zone:area},true);
+    if(photo?.geo){await loadCurbCandidates(photo);scanned++;}
+   }catch(e){notice('Μία δορυφορική λήψη παραλείφθηκε: '+e.message);}
+  }
+  // The supervised classifier scans only if independent-scene validation succeeded.
+  if(curbModel.ready&&photo?.zone===zoneId&&photo.geo)analyzeCurbs();
+  const profile=read(APPEARANCE_KEY,[]).filter(x=>x.zone===zoneId);
+  store(LAST,{stamp:zoneId+':'+available.feature.id,zone:zoneId,date:acquisitionDate(available.feature),at:Date.now(),visual:null,archivedScans:profile.length});
+  notice('Αυτόματη οπτική μάθηση: '+scanned+' νέες πραγματικές λήψεις · '+profile.length+' αποθηκευμένες ιστορικές λήψεις. Δεν αποτελεί ενημέρωση live στάθμευσης.');
+ }catch(e){notice('Ο αυτόματος έλεγχος δορυφορικών εικόνων απέτυχε: '+e.message);}
+ finally{scanBusy=false;displayLast();curbStatus();}
 }
 function displayLast(){const latest=read(LAST,null);$('aerialLast').textContent=latest?`Τελευταία αυτόματη ανάλυση: ${latest.date||'χωρίς ημερομηνία'} · περιοχή ${latest.zone} · ${latest.visual?.high||0} από ${latest.visual?.total||0} τμήματα με πιθανή παρουσία οχήματος (μη επαληθευμένο).`:'Δεν έχει πραγματοποιηθεί αυτόματη ανάλυση νέας εικόνας.';}
 export function openAerialLab(zoneId=null){
@@ -290,12 +309,12 @@ export function setupAerialLab(){
  $('curbScanArchive').onclick=scanHistoricArchive;
  $('curbCompare').onclick=compareHistoricArchive;
 
- $('aerialWatch').checked=read(WATCH,false);
+ $('aerialWatch').checked=read(WATCH,true);
  $('aerialWatch').onchange=e=>{store(WATCH,e.target.checked);notice(e.target.checked?'Ο έλεγχος γίνεται ανά 6 ώρες όσο η εφαρμογή παραμένει ανοιχτή. Δεν εκτελείται όταν κλείσεις τον browser.':'Ο περιοδικός έλεγχος απενεργοποιήθηκε.');if(e.target.checked)autoCheck();};
  $('aerialExport').onclick=()=>{const blob=new Blob([JSON.stringify({version:1,samples},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='araxe-aerial-training.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
  $('aerialImport').onchange=async e=>{try{const f=e.target.files?.[0];if(!f)return;if(f.size>5_000_000)throw Error('Το αντίγραφο είναι πολύ μεγάλο.');const obj=JSON.parse(await f.text());if(obj.version!==1||!Array.isArray(obj.samples)||obj.samples.length>2000||validSamples(obj.samples).length!==obj.samples.length)throw Error('Μη έγκυρο αρχείο εκπαίδευσης.');samples=[...samples,...obj.samples].slice(-1800);store(KEY,samples);status();notice('Εισήχθησαν δείγματα οπτικής εκπαίδευσης, χωρίς να μεταφορτωθούν εικόνες.');}catch(err){notice(err.message);}};
  displayLast();status();
  // A background watcher only runs while this page is open, never as a server job.
- setInterval(()=>{if(read(WATCH,false))autoCheck();},6*3600000);
- if(read(WATCH,false))setTimeout(autoCheck,12000);
+ setInterval(()=>{if(read(WATCH,true))autoCheck();},6*3600000);
+ if(read(WATCH,true))setTimeout(autoCheck,12000);
 }
