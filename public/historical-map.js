@@ -91,6 +91,11 @@ export function createHistoricalMap({map,getCatalog,onTrain}){
   }else{
    $('historyMapStatus').textContent='Βρέθηκαν πραγματικές ιστορικές λήψεις. Προβολή εικόνας και εκπαίδευση διαθέσιμες εδώ.';
   }
+  $('mapWhyNoDots').textContent=data.visual.length||data.classified.length?
+   'Χρωματιστά σημεία: μόνο πραγματικά καταγεγραμμένες μεταβολές ή ιστορικές ταξινομήσεις. Δεν δηλώνουν διαθεσιμότητα σήμερα.':
+   summary?.error?'Δεν εμφανίζονται ιστορικά σημεία επειδή απέτυχε η σύνδεση στην εξωτερική πηγή εικόνων.':
+   !scenes.length?'Δεν εμφανίζονται ιστορικά σημεία: δεν έχουν βρεθεί αδειοδοτημένες εικόνες υψηλής ανάλυσης για το κέντρο αυτής της περιοχής.':
+   'Υπάρχουν εγγραφές παλιών εικόνων, αλλά δεν έχουν ακόμη αναλυθεί ίδιες θέσεις δρόμου από διαφορετικές ημερομηνίες. Πάτα «Ανάλυση παλιών φωτογραφιών».';
   if(image&&(!scenes.length||!scenes.some(s=>s.id===imageId)))clearImage();
   if(scenes.length&&!image&&onceFor!==region.id){
    onceFor=region.id;
