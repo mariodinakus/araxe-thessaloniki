@@ -104,3 +104,14 @@
 .history-map-panel>small{font-size:9px;line-height:1.5;color:#9bbaa7}
 .history-view-pin{border:2px solid white;background:#f8bf6f;border-radius:50%;box-shadow:0 2px 8px #0007}
 @media(max-width:700px){.history-map-panel{left:12px;right:12px;bottom:78px;width:auto;max-height:43%;padding:11px;border-radius:13px}.history-map-panel p{font-size:9px}.history-map-head strong{font-size:9px}.history-map-stats span{font-size:9px;padding:7px}.history-map-actions button{min-width:105px}.history-map-key{font-size:8px}}
+
+
+/* First-screen entrypoint and honest deployed-runtime diagnostics. */
+.quick-map{background:#173f32!important;color:#d7f9e2!important;border-color:#173f32!important;font-weight:850!important}
+#mapArea{scroll-margin-top:12px}
+.map-build-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 9px}
+.map-build-row #mapDeployVersion{flex:1;min-width:0;font-size:9px;color:#b7efd1;font-weight:800;line-height:1.4;overflow-wrap:anywhere}
+.map-build-row #mapDeployVersion[data-ok="false"]{color:#f3c88d}
+.map-build-row button{flex-shrink:0;font-size:8px!important;color:#d1f3da;background:#275541;border:1px solid #608d75;border-radius:7px;padding:7px}
+.map-why{background:#214f3d;border-left:3px solid #84dcb2;border-radius:5px;padding:9px 10px;color:#d6f5df!important;font-size:9px!important}
+@media(max-width:700px){.map-build-row{flex-wrap:wrap}.map-build-row button{font-size:8px!important}.quick-map{font-size:9px!important}}

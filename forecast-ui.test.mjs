@@ -16,6 +16,6 @@ test('AI navigation scrolls to forecast and starts with a selected real area',as
 });
 test('new PWA assets are invalidated for both installed and browser users',async()=>{
  const sw=await readFile(new URL('./public/sw.js',import.meta.url),'utf8');
- assert.ok(sw.includes("araxe-v17"));
+ assert.ok(sw.includes("araxe-v18"));
  assert.ok(sw.includes("'/forecast-view.js'"));
 });
