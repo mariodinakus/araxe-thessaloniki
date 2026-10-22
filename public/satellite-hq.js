@@ -1,6 +1,7 @@
 /* Satellite-first UI: all displayed counts come from STAC or on-device, dated image observations. */
 import {fetchSatelliteCatalog} from './satellite-catalog.js';
-import {APPEARANCE_KEY,compareDatedAppearance} from './satellite-slots.js';
+import {APPEARANCE_KEY,SCAN_KEY,compareDatedAppearance} from './satellite-slots.js';
+import {historicalVisualSignals} from './historical-curb-summary.js';
 import {forecastSatelliteScenes,satelliteModelLabels} from './satellite-forecast.js';
 const $=id=>document.getElementById(id);
 const local=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
@@ -61,6 +62,13 @@ function paint(zone){
   const index=Math.round(Math.min(1,Math.max(0,x.change))*100);
   return '<div class="sat-hq-road-row"><div><strong>'+esc(x.name)+'</strong><small>'+x.n+' κοινά ιστορικά σημεία</small></div><div class="sat-hq-road-bar"><i style="width:'+index+'%"></i></div><b>'+index+'/100</b></div>';
  }).join(''):'<div class="sat-hq-empty">Χρειάζονται πραγματικές λήψεις από διαφορετικές ημερομηνίες για να εμφανιστούν μεταβολές ανά δρόμο. Δεν υπολογίζονται κενές θέσεις χωρίς εκπαιδευμένο ανιχνευτή.</div>';
+ const signals=historicalVisualSignals(local(SCAN_KEY,[]),zone.id);
+ $('satHQVisualDates').textContent=signals.dates?signals.dates+' ημερομηνίες εικόνων':'Χωρίς ιστορικές ταξινομήσεις';
+ $('satHQVisualContent').innerHTML=signals.inspected?
+ '<div class="sat-hq-signal-stats"><div><strong>'+signals.visuallyClear+'</strong><small>Υψηλές ενδείξεις οπτικού κενού</small></div><div><strong>'+signals.inspected+'</strong><small>Σημεία εικόνων που εξετάστηκαν</small></div><div><strong>'+signals.scenes+'</strong><small>Διαφορετικές λήψεις</small></div></div>'
+ +signals.roads.slice(0,3).map(r=>'<div class="sat-hq-visual-road"><span>'+esc(r.name)+'</span><b>'+r.visuallyClear+' / '+r.inspected+' σημεία</b></div>').join('')
+ +'<div class="sat-hq-explain">Μόνο ταξινομήσεις ιστορικών λήψεων από το επαληθευμένο οπτικό μοντέλο. Δεν είναι σημερινές κενές ή πιστοποιημένα νόμιμες θέσεις.</div>'
+ :'<div class="sat-hq-empty">Δεν υπάρχουν ακόμη ταξινομημένες ιστορικές εικόνες με επαρκώς εκπαιδευμένο μοντέλο. Η σύγκριση οπτικών μεταβολών μπορεί να γίνει χωρίς αυτές.</div>';
  const keys=['last','average','momentum'],briers=visual.models;
  $('satHQValidated').textContent=visual.ready?visual.validationSamples+' χρονολογικές αξιολογήσεις':'Χρειάζονται ≥3 λήψεις';
  $('satHQModelBars').innerHTML=keys.map(k=>'<div class="sat-hq-model-row"><span>'+esc(satelliteModelLabels[k])+'</span><div class="sat-hq-track"><i style="width:'+(visual.ready?Math.round(visual.weights[k]*100):0)+'%"></i></div><b>'+(visual.ready?Math.round(visual.weights[k]*100)+'%':'—')+'</b></div>').join('');
