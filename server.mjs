@@ -26,6 +26,7 @@ export const server=http.createServer(async(req,res)=>{try{
 res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('Permissions-Policy','geolocation=(self), camera=(), microphone=()');
 const url=new URL(req.url,'http://localhost');
 if(url.pathname==='/api/health')return reply(res,200,{ok:true});
+ if(url.pathname==='/api/version'&&req.method==='GET')return reply(res,200,{app:'ARAXE',deployCommit:process.env.RENDER_GIT_COMMIT||null,branch:process.env.RENDER_GIT_BRANCH||null,service:process.env.RENDER_SERVICE_NAME||null,mapFeature:'satellite-history-map-v2',source:'Render runtime',generatedAt:new Date().toISOString()});
 if(url.pathname==='/api/parking'&&req.method==='GET'){if(!parking.fetchedAt||Date.now()-parking.fetchedAt>6*3600000)refreshParking();return reply(res,200,parking);}
 if(url.pathname==='/api/streets'&&req.method==='GET'){const zone=url.searchParams.get('zone');if(!zones.some(z=>z.id===zone))return reply(res,400,{error:'Unknown area'});return reply(res,200,await streets(zone));}
 if(url.pathname==='/api/model'&&req.method==='GET'){const events=db.prepare('SELECT id,zone,outcome,at,road FROM observations WHERE at>? ORDER BY at LIMIT 10000').all(Date.now()-180*86400000);const traffic=db.prepare('SELECT id,zone,outcome,at,road FROM traffic WHERE at>? ORDER BY at LIMIT 10000').all(Date.now()-180*86400000);return reply(res,200,{events,traffic,persistent:Boolean(process.env.DATA_DIR),version:'ensemble-bayesian-logistic-knn-v2',updatedAt:events.at(-1)?.at||null});}
