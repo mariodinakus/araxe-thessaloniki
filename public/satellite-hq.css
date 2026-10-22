@@ -56,3 +56,14 @@
  header nav{justify-content:flex-start;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;white-space:nowrap;-webkit-overflow-scrolling:touch;padding-left:10px;padding-right:10px}
  header nav .nav{flex:0 0 auto;white-space:nowrap;font-size:10px;padding:11px 7px}
 }
+
+
+.sat-hq-roads{border-top:1px solid #3a6050;padding-top:3px;margin:4px 0 13px}
+.sat-hq-road-list{display:flex;flex-direction:column;gap:4px}
+.sat-hq-road-row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(35px,1fr) 50px;align-items:center;gap:8px;padding:8px 7px;border:1px solid #355748;background:rgba(255,255,255,.045);border-radius:8px}
+.sat-hq-road-row>div:first-child{min-width:0}
+.sat-hq-road-row strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;color:#dcf3e2}
+.sat-hq-road-row small{display:block;font-size:8px;color:#95c3a9;margin-top:3px}
+.sat-hq-road-bar{height:7px;border-radius:9px;background:#34584a;overflow:hidden}
+.sat-hq-road-bar i{display:block;height:100%;background:linear-gradient(90deg,#4f9e7a,#f0c476);border-radius:9px}
+.sat-hq-road-row>b{text-align:right;font-size:9px;white-space:nowrap;font-variant-numeric:tabular-nums;color:#bfe7c8}
