@@ -1,6 +1,7 @@
 import {zones,predict,metrics,mergeEvents,nearest,distance,predictTraffic} from './model.js';
 import {ensemble,trainOnline} from './ensemble.js';
-import {setupAerialLab,openAerialLab} from './aerial-lab.js';
+import {setupAerialLab,openAerialLab,openSatelliteTraining} from './aerial-lab.js';
+import {setupSatelliteHQ,renderSatelliteHQ} from './satellite-hq.js';
 import {tariffs,quoteLabel} from './pricing.js';
 import {rankExplorationRoads} from './road-ranking.js';
 import {roadIntelligence,tierColors,trafficSummary} from './road-intelligence.js';
@@ -46,6 +47,11 @@ function measure(z){const p=combined(z.id);return p.ready?`${Math.round(p.p*100)
 const conservativeAvoid=new Set(['αριστοτελους','αγιας σοφιας','δημητριου γουναρη','ικτινου','ζευξιδος','αγιας θεοδωρας']);
 function candidateName(name){return !conservativeAvoid.has(name.toLocaleLowerCase('el-GR').normalize('NFD').replace(/[\u0300-\u036f]/g,''));}
 function renderTariffs(){const hours=Number($('priceDuration').value);$('tariffResults').innerHTML=tariffs.map(t=>`<article class="tariff-row"><div><strong>${esc(t.name)}</strong><small>${esc(t.type==='municipal'?'Δημοτική ελεγχόμενη':'Οργανωμένο πάρκινγκ')}</small></div><span class="tariff-value">${esc(quoteLabel(t.id,hours))}</span><a href="${t.source}" target="_blank" rel="noopener noreferrer" title="${esc(t.note)}">Επίσημη πηγή ↗</a></article>`).join('');}
+function focusSatellite(){
+ document.querySelectorAll('dialog[open]').forEach(d=>d.close());
+ if(!selected)pickZone('center',false);
+ $('satelliteHQ')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function focusForecast(){
  document.querySelectorAll('dialog[open]').forEach(d=>d.close());
  if(!selected)pickZone('center',false);
@@ -57,7 +63,7 @@ function focusForecast(){
 $('forecastQuick').onclick=focusForecast;
 $('forecastReport').onclick=()=>{if(!selected)pickZone('center',false);showZone(selected);};
 $('forecastSatellite').onclick=()=>openAerialLab(selected?.id);
-function renderRoads(){const box=$('roadSuggestions');roadOverview=paintRoadIntelligence({zone:selected,roads:currentRoads,parkingEvents:events(),trafficEvents:trafficEvents(),arrival:arrival(),include:candidateName});renderForecastLab(selected,events(),arrival(),Date.now(),roadOverview);if(!selected||!currentRoads.length){box.innerHTML='<p class="fine muted">Διάλεξε περιοχή για σύγκριση πραγματικών δρόμων.</p>';return;}const e=events(),model=trainedModel();const roads=rankExplorationRoads(currentRoads,selected,candidateName).map(item=>({...item,p:ensemble(selected.id,e,arrival(),roadKey(item.r,selected),model)})).sort((a,b)=>Number(b.p.scope==='street'&&b.p.ready)-Number(a.p.scope==='street'&&a.p.ready)||((a.p.scope==='street'&&a.p.ready)&&(b.p.scope==='street'&&b.p.ready)?b.p.p-a.p.p:0)||b.score-a.score).slice(0,6);box.innerHTML='<h3>Δρόμοι για εξερεύνηση</h3><p class="fine muted">Με ανεπαρκές δείγμα, η προτεραιότητα βασίζεται σε απόσταση, χαρτογραφημένο μήκος και τύπο δρόμου — όχι σε δορυφορική ανίχνευση κενών θέσεων. Ελέγχεις πάντα τη σήμανση.</p>'+roads.map(({r,d,length,p})=>`<button class="road-card" data-road="${esc(String(r.id))}"><strong>${esc(r.name)}</strong><span>${p.ready?Math.round(p.p*100)+'% εκτίμηση · '+(p.scope==='street'?'στοιχεία δρόμου':'μεταφορά από περιοχή'):'Γεωμετρική προτεραιότητα · χωρίς δεδομένα διαθεσιμότητας'} · ${Math.round(d*1000)}μ. από τον πλησιέστερο δρόμο · ${Math.round(length)}μ. χαρτογραφημένο μήκος</span></button>`).join('');}
+function renderRoads(){const box=$('roadSuggestions');roadOverview=paintRoadIntelligence({zone:selected,roads:currentRoads,parkingEvents:events(),trafficEvents:trafficEvents(),arrival:arrival(),include:candidateName});renderSatelliteHQ(selected);renderForecastLab(selected,events(),arrival(),Date.now(),roadOverview);if(!selected||!currentRoads.length){box.innerHTML='<p class="fine muted">Διάλεξε περιοχή για σύγκριση πραγματικών δρόμων.</p>';return;}const e=events(),model=trainedModel();const roads=rankExplorationRoads(currentRoads,selected,candidateName).map(item=>({...item,p:ensemble(selected.id,e,arrival(),roadKey(item.r,selected),model)})).sort((a,b)=>Number(b.p.scope==='street'&&b.p.ready)-Number(a.p.scope==='street'&&a.p.ready)||((a.p.scope==='street'&&a.p.ready)&&(b.p.scope==='street'&&b.p.ready)?b.p.p-a.p.p:0)||b.score-a.score).slice(0,6);box.innerHTML='<h3>Δρόμοι για εξερεύνηση</h3><p class="fine muted">Με ανεπαρκές δείγμα, η προτεραιότητα βασίζεται σε απόσταση, χαρτογραφημένο μήκος και τύπο δρόμου — όχι σε δορυφορική ανίχνευση κενών θέσεων. Ελέγχεις πάντα τη σήμανση.</p>'+roads.map(({r,d,length,p})=>`<button class="road-card" data-road="${esc(String(r.id))}"><strong>${esc(r.name)}</strong><span>${p.ready?Math.round(p.p*100)+'% εκτίμηση · '+(p.scope==='street'?'στοιχεία δρόμου':'μεταφορά από περιοχή'):'Γεωμετρική προτεραιότητα · χωρίς δεδομένα διαθεσιμότητας'} · ${Math.round(d*1000)}μ. από τον πλησιέστερο δρόμο · ${Math.round(length)}μ. χαρτογραφημένο μήκος</span></button>`).join('');}
 function render(){const q=query.toLocaleLowerCase('el-GR');const zs=zones.filter(z=>z.name.toLocaleLowerCase('el-GR').includes(q));let ps=parkings.filter(p=>!['private','no','customers','permit'].includes(p.access));const f=$('filter').value;if(f==='public')ps=ps.filter(p=>['yes','public','permissive'].includes(p.access));if(f==='free')ps=ps.filter(p=>p.fee==='no');if(f==='accessible')ps=ps.filter(p=>p.wheelchair&&p.wheelchair!=='no'&&p.wheelchair!=='0');if(selected&&!q)ps=ps.filter(p=>distance(p,selected)<2);else if(q)ps=ps.filter(p=>p.name.toLocaleLowerCase('el-GR').includes(q)||zs.some(z=>distance(z,p)<1.5));
 const ordered=position?[...zs].sort((a,b)=>distance(a,position)-distance(b,position)):zs;
 $('coverageLabel').textContent=`${zones.length} περιοχές · Δυτικά έως ανατολικά`;$('resultsTitle').textContent=selected?selected.name:'Η πόλη, με μια ματιά';$('resultCount').textContent=`${ps.length} πάρκινγκ · ${zs.length} περιοχές`;
@@ -99,7 +105,7 @@ $('personalOpen').onclick=showPersonal;$('workQuick').onclick=()=>{const p=get('
 $('saveCar').onclick=async()=>{try{const p=await geo();put('araxe-car',{...p,at:Date.now()});renderCar();if(map){carMarker?.remove();carMarker=L.marker([p.lat,p.lon]).addTo(map).bindTooltip('Το αυτοκίνητό μου');}toast('Η θέση αποθηκεύτηκε μόνο σε αυτή τη συσκευή.');}catch(e){toast(e.message);}};
 $('locate').onclick=async()=>{try{position=await geo();if(position.lat<40.48||position.lat>40.76||position.lon<22.78||position.lon>23.15){toast('Βρίσκεσαι έξω από την περιοχή κάλυψης.');return;}map?.flyTo([position.lat,position.lon],15);if(map)L.circleMarker([position.lat,position.lon],{radius:7,color:'#fff',weight:3,fillColor:'#478ca6',fillOpacity:1}).addTo(map);selected=nearest(position);loadRoads(selected);render();toast(`Κοντά σου: ${selected.name}`);}catch(e){toast(e.message);}};
 document.querySelectorAll('.close').forEach(b=>b.onclick=()=>b.closest('dialog').close());document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}}));
-document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{if(b.dataset.view==='learn')showLearn();else if(b.dataset.view==='car'){renderCar();$('car').showModal();}else if(b.dataset.view==='aerial'){openAerialLab(selected?.id);}else if(b.dataset.view==='forecast'){focusForecast();}else{document.querySelectorAll('dialog[open]').forEach(d=>d.close());$('search').focus();}});
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{if(b.dataset.view==='learn')showLearn();else if(b.dataset.view==='car'){renderCar();$('car').showModal();}else if(b.dataset.view==='aerial'){openAerialLab(selected?.id);}else if(b.dataset.view==='satellite'){focusSatellite();}else if(b.dataset.view==='forecast'){focusForecast();}else{document.querySelectorAll('dialog[open]').forEach(d=>d.close());$('search').focus();}});
 $('quick').onclick=e=>{const b=e.target.closest('[data-zone]');if(b)pickZone(b.dataset.zone==='center'?(get('araxe-favorites',{}).centerZone||'center'):b.dataset.zone,false);};$('roadSuggestions').onclick=e=>{const b=e.target.closest('[data-road]');if(b){const r=currentRoads.find(r=>String(r.id)===b.dataset.road);if(r&&selected){const mid=r.geometry[Math.floor(r.geometry.length/2)];map?.flyTo(mid,17);showZone(selected,r);}}};$('results').onclick=e=>{const b=e.target.closest('button');if(b?.dataset.area)pickZone(b.dataset.area);if(b?.dataset.parking)showParking(parkings.find(p=>p.id===b.dataset.parking));};
 $('intelRoadTable').onclick=e=>{const b=e.target.closest('[data-intel-road]');if(!b||!selected)return;const item=roadOverview?.rows.find(r=>String(r.r.id)===b.dataset.intelRoad);if(!item)return;const r=item.r,mid=r.geometry[Math.floor(r.geometry.length/2)];map?.flyTo(mid,17);showZone(selected,r);};
 $('intelDiscover').onclick=()=>openAerialLab(selected?.id);
@@ -159,4 +165,14 @@ function setRoadMode(mode){
  if(!selected)pickZone('center',false);else repaintRoads();
  toast(mode==='historical'?'Ιστορικές λήψεις: πράσινοι κύκλοι μόνο αν υπάρχουν πραγματικές επισημάνσεις και ανεξάρτητα δοκιμασμένο μοντέλο.':mode==='zones'?'Ζώνες από πραγματική γεωμετρία δρόμων OSM· δεν γνωρίζουμε τις κενές θέσεις.':mode==='traffic'?'Άνοιξε ο ζωντανός κυκλοφοριακός χάρτης Waze. Τα στατιστικά του ARAXE παραμένουν ξεχωριστές αναφορές χρηστών.':'Στάθμευση: μοντέλο επιτυχίας αναζήτησης μόνο με επαρκείς παρατηρήσεις.');
 }
-setupAerialLab();$('priceDuration').onchange=renderTariffs;renderTariffs();render();initMap();pickZone('center',false);sync();loadParking();setInterval(sync,60000);setInterval(loadParking,120000);if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+setupAerialLab();
+setupSatelliteHQ({
+ onTrain:area=>openSatelliteTraining(area),
+ onMap:area=>{
+  if(!selected||selected.id!==area)pickZone(area,false);
+  setRoadMode('historical');
+  document.querySelector('.map-panel')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+ }
+});
+window.addEventListener('araxe:satellite-update',()=>{if(roadMode==='historical')showHistoricalMarkers();});
+$('priceDuration').onchange=renderTariffs;renderTariffs();render();initMap();pickZone('center',false);sync();loadParking();setInterval(sync,60000);setInterval(loadParking,120000);if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
