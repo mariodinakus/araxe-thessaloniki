@@ -131,7 +131,8 @@ $('oamLayer').onclick=()=>{
  if(roadLines)roadLines.eachLayer(l=>l.setStyle({opacity:openVisible?.9:.85,weight:openVisible?4:5}));
 };$('fit').onclick=()=>map.fitBounds([[40.48,22.78],[40.76,23.15]],{padding:[35,35]});
  if(roadMode==='historical'){
-  map.removeLayer(street);imagery.addTo(map);satellite=true;
+  // Keep OSM street tiles under Esri so a blocked archival tile never leaves a blank map.
+  imagery.addTo(map);satellite=true;
   $('layers').textContent='▧ Οδικός χάρτης';
   $('imageryNotice').hidden=false;
   $('imageryNotice').textContent='Υπόβαθρο Esri για προσανατολισμό (άγνωστη ημερομηνία). Οι πραγματικές χρονολογημένες λήψεις OpenAerialMap και οι αναλυμένες μεταβολές φαίνονται μόνο στα ξεχωριστά επισημασμένα επίπεδα.';
