@@ -67,3 +67,13 @@
 .sat-hq-road-bar{height:7px;border-radius:9px;background:#34584a;overflow:hidden}
 .sat-hq-road-bar i{display:block;height:100%;background:linear-gradient(90deg,#4f9e7a,#f0c476);border-radius:9px}
 .sat-hq-road-row>b{text-align:right;font-size:9px;white-space:nowrap;font-variant-numeric:tabular-nums;color:#bfe7c8}
+
+
+.sat-hq-evidence{padding:5px 0 11px;border-top:1px solid #3b5d50}
+.sat-hq-signal-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:9px 0}
+.sat-hq-signal-stats>div{background:#214537;border-radius:8px;border:1px solid #365e48;padding:10px 6px;min-width:0}
+.sat-hq-signal-stats strong{font-size:22px;display:block;font-variant-numeric:tabular-nums;color:#b6f3c7}
+.sat-hq-signal-stats small{font-size:8px;line-height:1.4;color:#a2cbb2;display:block;margin-top:4px}
+.sat-hq-visual-road{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:9px;padding:7px 4px;border-bottom:1px solid #315043;color:#c2e6cd}
+.sat-hq-visual-road>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sat-hq-visual-road>b{font-size:9px;color:#c8f3d1;font-variant-numeric:tabular-nums}
