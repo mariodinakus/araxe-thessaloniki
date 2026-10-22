@@ -50,6 +50,17 @@ function paint(zone){
   timelineRows(shown,Boolean(records.length))+
    (!records.length?'<div class="sat-hq-empty">Οι παραπάνω λήψεις είναι μόνο καταχωρίσεις του καταλόγου. Πάτησε εκπαίδευση για να αναλυθούν τα pixels τους.</div>':'')
   :'<div class="sat-hq-empty">'+(catalog?.error?'Αποτυχία ανάγνωσης καταλόγου: '+esc(catalog.error)+'.':catalog?.summary?(catalog.summary.partial?'Δεν βρέθηκαν κατάλληλες λήψεις στις πρώτες 100 καταχωρίσεις του καταλόγου.':'Δεν βρέθηκαν λήψεις ≤0,5 m/pixel με ανοικτή άδεια που καλύπτουν το κέντρο της περιοχής. Δεν επινοούμε δορυφορικά δεδομένα.'):'Ελέγχεται αν υπάρχουν ιστορικές λήψεις υψηλής ανάλυσης στην περιοχή.')+'</div>';
+ const groups=new Map();
+ for(const c of saved.changes){
+  const key=c.roadName||'Ανώνυμη οδός',g=groups.get(key)||{name:key,n:0,total:0};
+  g.n++;g.total+=c.visualDifference;groups.set(key,g);
+ }
+ const rank=[...groups.values()].map(x=>({...x,change:x.total/x.n})).sort((a,b)=>b.change-a.change).slice(0,5);
+ $('satHQRoadCount').textContent=groups.size?groups.size+' δρόμοι με ιστορικά στοιχεία':'Αναμονή διαφορετικών ημερομηνιών';
+ $('satHQRoads').innerHTML=rank.length?rank.map(x=>{
+  const index=Math.round(Math.min(1,Math.max(0,x.change))*100);
+  return '<div class="sat-hq-road-row"><div><strong>'+esc(x.name)+'</strong><small>'+x.n+' κοινά ιστορικά σημεία</small></div><div class="sat-hq-road-bar"><i style="width:'+index+'%"></i></div><b>'+index+'/100</b></div>';
+ }).join(''):'<div class="sat-hq-empty">Χρειάζονται πραγματικές λήψεις από διαφορετικές ημερομηνίες για να εμφανιστούν μεταβολές ανά δρόμο. Δεν υπολογίζονται κενές θέσεις χωρίς εκπαιδευμένο ανιχνευτή.</div>';
  const keys=['last','average','momentum'],briers=visual.models;
  $('satHQValidated').textContent=visual.ready?visual.validationSamples+' χρονολογικές αξιολογήσεις':'Χρειάζονται ≥3 λήψεις';
  $('satHQModelBars').innerHTML=keys.map(k=>'<div class="sat-hq-model-row"><span>'+esc(satelliteModelLabels[k])+'</span><div class="sat-hq-track"><i style="width:'+(visual.ready?Math.round(visual.weights[k]*100):0)+'%"></i></div><b>'+(visual.ready?Math.round(visual.weights[k]*100)+'%':'—')+'</b></div>').join('');
