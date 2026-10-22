@@ -121,3 +121,17 @@
 .sat-model-row b{color:#255e40;font-variant-numeric:tabular-nums;font-size:9px}
 .sat-model-row small{font-size:8px;color:#6c796e}
 .sat-model>small{font-size:8px;display:block;margin-top:9px;line-height:1.6}
+
+
+/* Immediate-access AI predictions — visible above other sidebar analytics. */
+.forecast-showcase-head{display:flex;align-items:end;justify-content:space-between;gap:8px;margin:5px 0 3px}
+.forecast-showcase-head>div{display:flex;flex-direction:column;gap:5px}
+.forecast-showcase-head strong{font-size:17px;letter-spacing:-.5px;line-height:1.2;color:#173d30}
+.forecast-showcase-head>small{background:#e3efe6;border:1px solid #d0e1d4;color:#31654b;font-size:9px;font-weight:800;padding:6px;border-radius:7px;white-space:nowrap}
+.quick-forecast{font-size:10px!important;background:#214d3b!important;color:#fff!important;border-color:#214d3b!important;font-weight:800!important}
+#forecastLab{scroll-margin-top:80px;background:linear-gradient(145deg,#e3f0e7,#f3f7ed);border:1px solid #b7d2c2;box-shadow:0 7px 24px #1c422519;padding:15px 12px;margin:8px 0 17px}
+#forecastLab.forecast-attention{outline:3px solid #72ae83;outline-offset:2px}
+#forecastLab>.intel-block-head{align-items:center}
+#forecastLab .intel-block-head h4{font-size:13px;letter-spacing:-.2px}
+#forecastLab .intel-block-head>span{font-size:10px}
+@media(max-width:700px){.forecast-showcase-head strong{font-size:15px}.forecast-showcase-head>small{font-size:8px}#forecastLab{margin:8px 0 14px;padding:12px}}
