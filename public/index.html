@@ -4,7 +4,12 @@
 <div class="controls"><label>Άφιξη <select id="arrival" aria-label="Ώρα άφιξης"><option value="0">Τώρα</option><option value="1">Σε 1 ώρα</option><option value="2">Σε 2 ώρες</option><option value="4">Σε 4 ώρες</option><option value="8">Σε 8 ώρες</option></select></label><label>Πάρκινγκ <select id="filter" aria-label="Φίλτρο πάρκινγκ"><option value="all">Όλα</option><option value="public">Δημόσια πρόσβαση</option><option value="free">Δωρεάν στο OSM</option><option value="accessible">Με θέσεις ΑμεΑ</option></select></label></div>
 <div class="forecast-showcase-head"><div><span class="eyebrow">ARAXE · PARKING PREDICTIONS</span><strong>Οι προβλέψεις σου, πρώτες.</strong></div><small id="araxeBuild">AI · νέα έκδοση</small></div><div id="forecastLab" class="intel-block forecast-lab" aria-label="Προβλεπτικά μοντέλα στάθμευσης">
 <div class="intel-block-head"><h4>Parking Forecast Lab</h4><span id="forecastConfidence">4 μοντέλα · χωρίς βαθμονόμηση</span></div>
-<div class="forecast-hero"><strong id="forecastMainProbability">—</strong><div><b id="forecastMainLabel">Πρόβλεψη με πραγματικά δεδομένα</b><span id="forecastSampleStatus">Χωρίς επαρκείς αναφορές.</span></div></div>
+<div class="forecast-hero"><strong id="forecastMainProbability">—</strong><div><b id="forecastMainLabel">Πρόβλεψη με πραγματικά δεδομένα</b><span id="forecastSampleStatus">Χωρίς επαρκείς αναφορές.</span></div></div><div id="forecastColdStart" class="forecast-cold-start" hidden>
+ <div class="forecast-cold-tag">START MODE · ΠΡΟΣΩΡΙΝΗ ΕΝΔΕΙΞΗ, ΟΧΙ ΕΛΕΥΘΕΡΕΣ ΘΕΣΕΙΣ</div>
+ <p id="forecastColdText">Επιλέγεις περιοχή και βλέπεις την εκτίμηση ώρας.</p>
+ <div id="forecastColdRoads"></div>
+ <div class="forecast-cold-actions"><button id="forecastReport" type="button">+ Καταχώρισε πραγματική αναζήτηση</button><button id="forecastSatellite" type="button">Δορυφορική μάθηση ↗</button></div>
+ </div>
 <div id="forecastModelBars" class="forecast-model-bars"></div>
 <div id="forecastReliability" class="forecast-reliability">Ο έλεγχος των μοντέλων αρχίζει όταν υπάρχουν επαρκείς προηγούμενες αναφορές.</div>
 <div id="forecastFuture" class="forecast-future"></div>
