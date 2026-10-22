@@ -129,7 +129,14 @@ $('oamLayer').onclick=()=>{
  }else{map.removeLayer(openImagery);$('imageryNotice').hidden=true;}
  $('oamLayer').classList.toggle('chosen',openVisible);
  if(roadLines)roadLines.eachLayer(l=>l.setStyle({opacity:openVisible?.9:.85,weight:openVisible?4:5}));
-};$('fit').onclick=()=>map.fitBounds([[40.48,22.78],[40.76,23.15]],{padding:[35,35]});const c=get('araxe-car',null);if(c)carMarker=L.marker([c.lat,c.lon]).addTo(map).bindTooltip('Το αυτοκίνητό μου');render();}
+};$('fit').onclick=()=>map.fitBounds([[40.48,22.78],[40.76,23.15]],{padding:[35,35]});
+ if(roadMode==='historical'){
+  map.removeLayer(street);imagery.addTo(map);satellite=true;
+  $('layers').textContent='▧ Οδικός χάρτης';
+  $('imageryNotice').hidden=false;
+  $('imageryNotice').textContent='Υπόβαθρο Esri για προσανατολισμό (άγνωστη ημερομηνία). Οι πραγματικές χρονολογημένες λήψεις OpenAerialMap και οι αναλυμένες μεταβολές φαίνονται μόνο στα ξεχωριστά επισημασμένα επίπεδα.';
+ }
+ const c=get('araxe-car',null);if(c)carMarker=L.marker([c.lat,c.lon]).addTo(map).bindTooltip('Το αυτοκίνητό μου');render();}
 $('parkingRoads').onclick=()=>setRoadMode('parking');$('trafficRoads').onclick=()=>setRoadMode('traffic');$('zoneRoads').onclick=()=>setRoadMode('zones');$('historicalSlots').onclick=()=>setRoadMode('historical');
 function updateWazeTraffic(point=selected||{lat:40.632,lon:22.947,name:'Θεσσαλονίκη'},force=false){
  if(roadMode!=='traffic'&&!force)return;
