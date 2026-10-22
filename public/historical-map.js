@@ -2,7 +2,7 @@
  * human-validated historical visual inferences. No synthetic/live vacancy data. */
 import {historicalMapEvidence,supportedSceneFootprints,perImageTileUrl,visualLevel} from './map-history.js';
 const $=id=>document.getElementById(id);
-const escape=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'"').replace(/'/g,'&#39;');
+const escape=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 export function createHistoricalMap({map,getCatalog,onTrain}){
  const outlines=L.layerGroup().addTo(map),changes=L.layerGroup().addTo(map),vacancies=L.layerGroup().addTo(map);
  let image=null,imageId=null,region=null,active=false,onceFor=null,data=null,scenes=[];
