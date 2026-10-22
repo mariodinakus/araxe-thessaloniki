@@ -25,7 +25,7 @@ export function renderForecastLab(zone,events,at=Date.now(),now=Date.now(),roadO
  if(cold){
   const source=baseline.hasOSM?'Χαρτογραφημένοι υποψήφιοι δρόμοι OSM: '+baseline.mappedRoadNames+'.':'Δεν έχουν φορτωθεί ακόμη κατάλληλοι δρόμοι OSM.';
   el('forecastColdText').textContent='Ωριαία πίεση: '+baseline.level+'. '+baseline.factors.join(', ')+'. '+source+' Δεν πρόκειται για πιθανότητα θέσης ούτε για ζωντανή κίνηση.';
-  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\\x27':'&#39;'}[c]));
+  const escape=x=>String(x??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   el('forecastColdRoads').innerHTML=baseline.candidates.length?'<strong>Ενδεικτικοί δρόμοι για εξερεύνηση · όχι επιβεβαιωμένα νόμιμες θέσεις</strong>'
     +baseline.candidates.map(x=>'<div><span>'+escape(x.name)+'</span><b>Ζώνη '+escape(x.tier)+' · '+x.score+'/100</b></div>').join('')
     :'<small>Οι δρόμοι θα εμφανιστούν μετά τη φόρτωση της γεωμετρίας OSM.</small>';
