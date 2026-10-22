@@ -1,13 +1,15 @@
 import {forecastHorizon,modelLabels} from './forecast-engine.js';
 import {APPEARANCE_KEY,SLOT_KEY,compareDatedAppearance} from './satellite-slots.js';
 import {forecastSatelliteScenes,satelliteModelLabels} from './satellite-forecast.js';
+import {planningBaseline,planningTimeline} from './planning-baseline.js';
 const el=id=>document.getElementById(id);
 const nfmt=x=>Number.isFinite(x)?x.toFixed(3):'—';
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
 const labels=['bayesian','logistic','neighbors','weekly'];
-export function renderForecastLab(zone,events,at=Date.now(),now=Date.now()){
+export function renderForecastLab(zone,events,at=Date.now(),now=Date.now(),roadOverview=null){
  if(!el('forecastLab'))return;
  if(!zone){
+  el('forecastColdStart').hidden=true;
   el('forecastMainProbability').textContent='—';
   el('forecastMainLabel').textContent='Διάλεξε περιοχή στον χάρτη';
   el('forecastSampleStatus').textContent='Το μοντέλο χρειάζεται πραγματικές αναφορές.';
@@ -18,13 +20,22 @@ export function renderForecastLab(zone,events,at=Date.now(),now=Date.now()){
   return;
  }
  const series=forecastHorizon(zone.id,events,at,{now});
- const prediction=series[0],v=prediction.validation;
- el('forecastMainProbability').textContent=prediction.ready?prediction.probability+'%':'—';
- el('forecastMainLabel').textContent=prediction.ready?'Εκτίμηση επιτυχίας αναζήτησης ≤10′':'Δεν υπάρχει επαρκές δείγμα';
- el('forecastConfidence').textContent='Εμπιστοσύνη: '+prediction.confidenceLabel;
+ const prediction=series[0],v=prediction.validation,baseline=planningBaseline(zone,at,roadOverview),cold=!prediction.ready;
+ el('forecastColdStart').hidden=!cold;
+ if(cold){
+  const source=baseline.hasOSM?'Χαρτογραφημένοι υποψήφιοι δρόμοι OSM: '+baseline.mappedRoadNames+'.':'Δεν έχουν φορτωθεί ακόμη κατάλληλοι δρόμοι OSM.';
+  el('forecastColdText').textContent='Ωριαία πίεση: '+baseline.level+'. '+baseline.factors.join(', ')+'. '+source+' Δεν πρόκειται για πιθανότητα θέσης ούτε για ζωντανή κίνηση.';
+  const escape=x=>String(x??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  el('forecastColdRoads').innerHTML=baseline.candidates.length?'<strong>Ενδεικτικοί δρόμοι για εξερεύνηση · όχι επιβεβαιωμένα νόμιμες θέσεις</strong>'
+    +baseline.candidates.map(x=>'<div><span>'+escape(x.name)+'</span><b>Ζώνη '+escape(x.tier)+' · '+x.score+'/100</b></div>').join('')
+    :'<small>Οι δρόμοι θα εμφανιστούν μετά τη φόρτωση της γεωμετρίας OSM.</small>';
+ }
+ el('forecastMainProbability').textContent=prediction.ready?prediction.probability+'%':baseline.pressureIndex+'/100';
+ el('forecastMainLabel').textContent=prediction.ready?'Εκτίμηση επιτυχίας αναζήτησης ≤10′':'Ενδεικτική ωριαία πίεση · όχι πιθανότητα θέσης';
+ el('forecastConfidence').textContent=prediction.ready?'Εμπιστοσύνη: '+prediction.confidenceLabel:'Χωρίς εκπαιδευμένα δεδομένα';
  el('forecastSampleStatus').textContent=prediction.ready?
   prediction.n+' συγκρίσιμες αναφορές · '+prediction.effective.toFixed(1)+' σταθμισμένο δείγμα · '+(prediction.scope==='street'?'δρόμος':'περιοχή'):
-  'Αναφορές στην ίδια ημέρα/ώρα: '+prediction.n+' · χρειάζονται περισσότερα στοιχεία.';
+  'Αναφορές αντίστοιχης ώρας: '+prediction.n+' · η εκπαιδευμένη πρόβλεψη ενεργοποιείται όταν συλλεχθούν επαρκή αποτελέσματα.';
  el('forecastModelBars').innerHTML=labels.map((key,i)=>{
   const p=prediction.models[key],w=prediction.weights[key],width=prediction.ready?Math.max(1,Math.round(p*100)):0;
   return '<div class="forecast-model-row"><span>'+modelLabels[key]+'</span><div class="forecast-model-track"><div style="width:'+width+'%"></div></div><strong>'+(prediction.ready?Math.round(p*100)+'%':'—')+'</strong><small>βάρος '+Math.round(w*100)+'%</small></div>';
@@ -35,6 +46,11 @@ export function renderForecastLab(zone,events,at=Date.now(),now=Date.now()){
   +'<small>'+values+'</small><p>'+(v.validated?'Τα ιστορικά σφάλματα είναι χαμηλότερα από το βασικό μοντέλο.':'Δεν έχει αποδειχθεί ακόμη ότι ο συνδυασμός ξεπερνά το απλό baseline.')+'</p>';
  el('forecastFuture').innerHTML='<strong>Ώρα άφιξης · εκτίμηση επιτυχίας</strong><div class="forecast-horizon">'
   +series.map(x=>'<div class="forecast-hour"><b>+'+x.hours+'ω</b><div><i style="height:'+(x.ready?Math.max(2,x.probability):0)+'%"></i></div><span>'+(x.ready?x.probability+'%':'—')+'</span></div>').join('')+'</div>';
+ if(cold){
+  const timeline=planningTimeline(zone,at);
+  el('forecastFuture').innerHTML='<strong>Ενδεικτική πίεση ανά ώρα · κανόνας, ΟΧΙ πιθανότητα</strong><div class="forecast-horizon forecast-cold-horizon">'
+   +timeline.map(x=>'<div class="forecast-hour"><b>+'+x.hours+'ω</b><div><i style="height:'+x.pressureIndex+'%"></i></div><span>'+x.pressureIndex+'/100</span></div>').join('')+'</div>';
+ }
  const history=read(APPEARANCE_KEY,[]).filter(x=>x.zone===zone.id),
  comparisons=compareDatedAppearance(history).filter(x=>x.zone===zone.id),
  annotations=read(SLOT_KEY,[]).filter(x=>x.zone===zone.id);
