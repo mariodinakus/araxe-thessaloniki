@@ -43,7 +43,7 @@ function normalizedWeights(scores,completed){
 export function backtestModels(events,zone,{now=Date.now(),maxEvaluations=35}={}){
  const valid=reliableEvents(events,now).filter(e=>e.zone===zone);
  const scores=Object.fromEntries(NAMES.map(n=>[n,0]));
- let evaluated=0,baseline=0;const snapshots=[],last=Math.max(0,valid.length-maxEvaluations);
+ let evaluated=0,baseline=0,ensembleLoss=0;const last=Math.max(0,valid.length-maxEvaluations);
  // Re-estimate after every previous record. No lookahead, no timestamps > current label.
  for(let i=last;i<valid.length;i++){
   const sample=valid[i],past=valid.slice(0,i).filter(e=>e.at<sample.at);
@@ -52,18 +52,18 @@ export function backtestModels(events,zone,{now=Date.now(),maxEvaluations=35}={}
   if(!estimate.base.ready)continue;
   const freq=past.reduce((s,e)=>s+e.outcome,0)/past.length;
   baseline+=(freq-sample.outcome)**2;
+  // Predict using weights learned from strictly EARLIER hold-out labels.
+  const before=normalizedWeights(scores,evaluated);
   const probs={};
-  for(const n of NAMES){const v=clamp(estimate.values[n],.001,.999);scores[n]+=(v-sample.outcome)**2;probs[n]=v;}
-  snapshots.push({at:sample.at,actual:sample.outcome,predictions:probs});
+  for(const n of NAMES)probs[n]=clamp(estimate.values[n],.001,.999);
+  const mixed=NAMES.reduce((sum,n)=>sum+before[n]*probs[n],0);
+  ensembleLoss+=(mixed-sample.outcome)**2;
+  for(const n of NAMES)scores[n]+=(probs[n]-sample.outcome)**2;
   evaluated++;
  }
  const averages=Object.fromEntries(NAMES.map(n=>[n,evaluated?scores[n]/evaluated:null]));
  const weights=normalizedWeights(scores,evaluated);
- const weighted=Object.values(snapshots).reduce((a,row)=>{
-  const p=NAMES.reduce((s,n)=>s+row.predictions[n]*weights[n],0);
-  return a+(p-row.actual)**2;
- },0);
- const weightedBrier=evaluated?weighted/evaluated:null;
+ const weightedBrier=evaluated?ensembleLoss/evaluated:null;
  return {evaluated,weights,models:averages,baseline:evaluated?baseline/evaluated:null,
   ensembleBrier:weightedBrier,validated:evaluated>=15&&weightedBrier<=baseline/evaluated,
   // Scores are a visible rolling reliability comparison, not a performance guarantee.
