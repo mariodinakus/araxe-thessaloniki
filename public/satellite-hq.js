@@ -34,7 +34,7 @@ function paint(zone){
  $('satHQPoints').textContent=saved.changes.length;
  $('satHQEligible').textContent=catalog?.summary?catalog.summary.eligible:'—';
  $('satHQCoverage').textContent=catalog?.summary?
-  catalog.summary.satellite+' πραγματικά δορυφορικές · '+catalog.summary.independentDates+' ημερομηνίες'
+  catalog.summary.satellite+' πραγματικά δορυφορικές · '+catalog.summary.independentDates+' ημερομηνίες'+(catalog.summary.partial?' · μερική καταγραφή':'')
   :catalog?.error?'Πρόβλημα πηγής':'Κατάλογος OAM';
  $('satHQLast').textContent=catalog?.summary?
   'Κατάλογος · '+new Date(catalog.summary.checkedAt).toLocaleTimeString('el-GR',{hour:'2-digit',minute:'2-digit'})
@@ -49,7 +49,7 @@ function paint(zone){
  $('satHQTimeline').innerHTML=shown.length?
   timelineRows(shown,Boolean(records.length))+
    (!records.length?'<div class="sat-hq-empty">Οι παραπάνω λήψεις είναι μόνο καταχωρίσεις του καταλόγου. Πάτησε εκπαίδευση για να αναλυθούν τα pixels τους.</div>':'')
-  :'<div class="sat-hq-empty">'+(catalog?.error?'Αποτυχία ανάγνωσης καταλόγου: '+esc(catalog.error)+'.':catalog?.summary?'Δεν βρέθηκαν λήψεις ≤0,5 m/pixel με ελεύθερη άδεια που καλύπτουν το κέντρο της περιοχής. Δεν επινοούμε δορυφορικά δεδομένα.':'Ελέγχεται αν υπάρχουν ιστορικές λήψεις υψηλής ανάλυσης στην περιοχή.')+'</div>';
+  :'<div class="sat-hq-empty">'+(catalog?.error?'Αποτυχία ανάγνωσης καταλόγου: '+esc(catalog.error)+'.':catalog?.summary?(catalog.summary.partial?'Δεν βρέθηκαν κατάλληλες λήψεις στις πρώτες 100 καταχωρίσεις του καταλόγου.':'Δεν βρέθηκαν λήψεις ≤0,5 m/pixel με ανοικτή άδεια που καλύπτουν το κέντρο της περιοχής. Δεν επινοούμε δορυφορικά δεδομένα.'):'Ελέγχεται αν υπάρχουν ιστορικές λήψεις υψηλής ανάλυσης στην περιοχή.')+'</div>';
  const keys=['last','average','momentum'],briers=visual.models;
  $('satHQValidated').textContent=visual.ready?visual.validationSamples+' χρονολογικές αξιολογήσεις':'Χρειάζονται ≥3 λήψεις';
  $('satHQModelBars').innerHTML=keys.map(k=>'<div class="sat-hq-model-row"><span>'+esc(satelliteModelLabels[k])+'</span><div class="sat-hq-track"><i style="width:'+(visual.ready?Math.round(visual.weights[k]*100):0)+'%"></i></div><b>'+(visual.ready?Math.round(visual.weights[k]*100)+'%':'—')+'</b></div>').join('');
@@ -59,12 +59,13 @@ function paint(zone){
 }
 async function loadZone(zone,force=false){
  const previous=zoneCache.get(zone.id);
- if(!force&&previous&&previous.summary&&Date.now()-previous.summary.checkedAt<CACHE_TTL)return;
+ if(!force&&previous&&((previous.summary&&Date.now()-previous.summary.checkedAt<CACHE_TTL)||(previous.error&&Date.now()-previous.checkedAt<5*60*1000)))return;
  if(!force&&previous?.loading)return;
  controller?.abort();controller=new AbortController();const seq=++serial;
  zoneCache.set(zone.id,{loading:true});paint(zone);
  try{
-  const summary=await fetchSatelliteCatalog(zone,{signal:controller.signal});
+  const signal=AbortSignal.any([controller.signal,AbortSignal.timeout(16000)]);
+  const summary=await fetchSatelliteCatalog(zone,{signal});
   if(seq!==serial)return;
   zoneCache.set(zone.id,{summary,loading:false});
  }catch(e){
