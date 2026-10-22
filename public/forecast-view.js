@@ -1,5 +1,6 @@
 import {forecastHorizon,modelLabels} from './forecast-engine.js';
 import {APPEARANCE_KEY,SLOT_KEY,compareDatedAppearance} from './satellite-slots.js';
+import {forecastSatelliteScenes,satelliteModelLabels} from './satellite-forecast.js';
 const el=id=>document.getElementById(id);
 const nfmt=x=>Number.isFinite(x)?x.toFixed(3):'—';
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
@@ -12,6 +13,7 @@ export function renderForecastLab(zone,events,at=Date.now(),now=Date.now()){
   el('forecastSampleStatus').textContent='Το μοντέλο χρειάζεται πραγματικές αναφορές.';
   el('forecastConfidence').textContent='Χωρίς μέτρηση';
   el('forecastModelBars').innerHTML=el('forecastFuture').innerHTML='';
+ if(el('satelliteModelStats'))el('satelliteModelStats').textContent='Επίλεξε περιοχή για έλεγχο δορυφορικής μάθησης.';
   el('forecastReliability').textContent='Δεν υπάρχουν δεδομένα για ανεξάρτητο χρονικό έλεγχο.';
   return;
  }
@@ -36,6 +38,14 @@ export function renderForecastLab(zone,events,at=Date.now(),now=Date.now()){
  const history=read(APPEARANCE_KEY,[]).filter(x=>x.zone===zone.id),
  comparisons=compareDatedAppearance(history).filter(x=>x.zone===zone.id),
  annotations=read(SLOT_KEY,[]).filter(x=>x.zone===zone.id);
+ const satelliteForecast=forecastSatelliteScenes(history,zone.id),satBox=el('satelliteModelStats');
+ if(satBox){
+  const vals=satelliteForecast.models;
+  satBox.innerHTML='<strong>Satellite Visual Models · '+satelliteForecast.scenes+' λήψεις</strong>'
+    +'<div class="sat-model-kpis"><span>'+satelliteForecast.points+' κοινά σημεία δρόμων</span><span>'+satelliteForecast.validationSamples+' δοκιμές σε επόμενες εικόνες</span><span>Δείκτης μεταβολής: '+(satelliteForecast.changeIndex??'—')+'/100</span></div>'
+    +Object.keys(satelliteModelLabels).map(name=>'<div class="sat-model-row"><span>'+satelliteModelLabels[name]+'</span><b>MSE '+(Number.isFinite(vals[name])?vals[name].toFixed(4):'—')+'</b><small>βάρος '+Math.round(satelliteForecast.weights[name]*100)+'%</small></div>').join('')
+    +'<small>'+(satelliteForecast.ready?'Έγινε χρονικός έλεγχος των μοντέλων με εικόνες που δεν είχαν δει στη στιγμή της πρόβλεψης.':'Αναμονή τουλάχιστον 3 διαφορετικών ημερομηνιών και 15 αξιολογήσιμων σημείων.')+' <b>Προβλέπει εμφάνιση εικόνας, όχι ελεύθερες θέσεις.</b></small>';
+ }
  const satelliteDetail=el('intelSatelliteInfo');
  if(satelliteDetail){
   satelliteDetail.textContent=history.length+' χρονολογημένες οπτικές λήψεις αυτής της συσκευής · '
