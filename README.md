@@ -148,3 +148,14 @@ The existing ARAXE app now has two parallel learning engines plus clear evaluati
 - Critically: this unlabelled appearance model detects changes but **does not predict free parking spaces**. Learning to discriminate actual cars vs physically empty legal spaces requires enough licensed submeter imagery and validated annotated images spanning different captures; the existing supervised curb classifier stays disabled until its independent-scene validation passes. Satellite patterns are **not** silently fed to driver parking predictions, avoiding label leakage and invented real-time occupancy.
 
 Tests: `forecast-engine.test.mjs`, `satellite-forecast.test.mjs`. Technical limits: free Render disk for collective reports is ephemeral; on-device historical imagery features are lost if browser storage is cleared; new/old high-resolution coverage is not guaranteed. OpenAerialMap STAC and per-item tile terms: https://docs.imagery.hotosm.org/usage/using-imagery/ . A similar research dataset for future specialized detector benchmarking, *non-commercial research license only*: PaCaBa Barcelona https://cvl.tuwien.ac.at/research/cvl-databases/pacaba-parking-cars-barcelona-dataset/ .
+
+## Useful parking cold start (22 October 2026)
+
+When real driver outcomes are insufficient to train and evaluate parking-success probabilities, the main Forecast Lab **does not claim calibrated probabilities**. Instead it shows an obvious amber **START MODE / untrained** panel with:
+
+- A 0–100 **hour/daypart activity-pressure heuristic**, not a percent chance of finding a vacant legal spot. It depends only on the mapped zone's broad type (center/residential/nightlife/mixed), local Athens-time-independent **Thessaloniki time** provided by the existing `context()` service (`Europe/Athens`), weekday/weekend and time of arrival.
+- Candidate OSM mapped road names and their *geometric exploration* A–D rankings once the existing `/api/streets` feed loads, and an explicit note that no road's legal bays or current occupancy have been verified.
+- A 0/1/2/4/6/8h progression of the *same simple heuristic pressure*, distinctly labeled as an untrained index — it is NOT the 4-model parking probability chart.
+- Direct action to open actual driver-report form after completing an on-street parking search; optional aerial ML inspection. The four ML models, report counts, and chronological Brier evaluations remain visible, but have dashes where statistically untrained.
+
+When genuine effective evidence reaches the existing Bayesian minimum, the trained probabilistic forecasts replace the fallback automatically. The browser may keep app state; the deployment of main remains separate and must be verified on Render.
