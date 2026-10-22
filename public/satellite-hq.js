@@ -92,6 +92,7 @@ async function loadZone(zone,force=false){
   zoneCache.set(zone.id,{error:e.name==='AbortError'?'Ακυρώθηκε η αναζήτηση':e.message,loading:false,checkedAt:Date.now()});
  }
  if(active?.id===zone.id)paint(zone);
+ window.dispatchEvent(new CustomEvent('araxe:satellite-catalog',{detail:{zoneId:zone.id}}));
 }
 export function renderSatelliteHQ(zone,{refresh=false}={}){
  active=zone||null;
@@ -104,4 +105,7 @@ export function setupSatelliteHQ({onTrain,onMap}){
  $('satHQMap').onclick=()=>onMap?.(active?.id||'center');
  window.addEventListener('araxe:satellite-update',()=>active&&paint(active));
 }
-export function satelliteCatalogSnapshot(zoneId){return zoneCache.get(zoneId)?.summary||null;}
+export function satelliteCatalogSnapshot(zoneId){
+ const row=zoneCache.get(zoneId);
+ return row?.summary||row?.error?row?.summary||{error:row.error,checkedAt:row.checkedAt,scenes:[]}:null;
+}

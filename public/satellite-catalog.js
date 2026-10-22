@@ -30,6 +30,7 @@ export function summarizeScenes(features,zone){
   eligible:highRes.length,independentDates:dates.size,satellite:satellite.length,
   scenes:highRes.sort((a,b)=>(scenePlatform(b)==='satellite')-(scenePlatform(a)==='satellite')||sceneDate(b).localeCompare(sceneDate(a))).slice(0,14).map(f=>({
    id:String(f.id),date:sceneDate(f),gsd:sceneGsd(f),platform:scenePlatform(f),
+   bbox:f.bbox.slice(0,4).map(Number),
    license:sceneLicense(f),producer:String(f.properties?.['oam:producer_name']||f.providers?.[0]?.name||'Άγνωστος δημιουργός'),
    source:'OAM STAC',
   }))};
