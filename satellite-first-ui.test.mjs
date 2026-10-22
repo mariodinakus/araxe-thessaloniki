@@ -43,7 +43,7 @@ test('satellite historical evidence is foremost in home UI with direct auto-trai
  const app=await readFile(new URL('./public/app.js',import.meta.url),'utf8');
  const aerial=await readFile(new URL('./public/aerial-lab.js',import.meta.url),'utf8');
  const hq=await readFile(new URL('./public/satellite-hq.js',import.meta.url),'utf8');
- for(const id of ['satelliteHQ','satHQTrain','satHQRefresh','satHQMap','satHQScenes','satHQPoints','satHQTimeline','satHQModelBars','satHQStatus'])assert.ok(html.includes('id="'+id+'"'),id);
+ for(const id of ['satelliteHQ','satHQTrain','satHQRefresh','satHQMap','satHQScenes','satHQPoints','satHQTimeline','satHQModelBars','satHQStatus','satHQRoads','satHQRoadCount'])assert.ok(html.includes('id="'+id+'"'),id);
  assert.ok(html.indexOf('id="satelliteHQ"')<html.indexOf('id="forecastLab"'));
  assert.ok(html.includes('data-view="satellite"'));
  assert.ok(app.includes('renderSatelliteHQ(selected)'));
@@ -59,6 +59,8 @@ test('no archived scenes means dashboard explains missing real coverage, never s
  const src=await readFile(new URL('./public/satellite-hq.js',import.meta.url),'utf8');
  assert.ok(src.includes('Δεν επινοούμε δορυφορικά δεδομένα'));
  assert.ok(src.includes('όχι πραγματικής πληρότητας'));
+ assert.ok(src.includes('visualDifference'));
+ assert.ok(src.includes('κοινά ιστορικά σημεία'));
  const css=await readFile(new URL('./public/satellite-hq.css',import.meta.url),'utf8');
  assert.ok(css.includes('.sat-hq-kpis'));assert.ok(css.includes('@media(max-width:700px)'));
 });
