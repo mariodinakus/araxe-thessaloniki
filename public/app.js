@@ -9,6 +9,7 @@ import {paintRoadIntelligence,colorOfMappedRoad,tierDetail} from './intelligence
 import {wazeEmbedUrl,wazeFullMapUrl} from './live-traffic.js';
 import {SCAN_KEY,newestHistoricalMarkers} from './satellite-slots.js';
 import {createHistoricalMap} from './historical-map.js';
+import {createSatelliteYearMap} from './satellite-year-view.js';
 import {satelliteCatalogSnapshot} from './satellite-hq.js';
 import {renderForecastLab} from './forecast-view.js';
 import {parkingForecast} from './forecast-engine.js';
@@ -16,7 +17,7 @@ import {planningBaseline} from './planning-baseline.js';
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function get(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}}
 function put(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{toast('Δεν αποθηκεύτηκε στη συσκευή. Έλεγξε τον διαθέσιμο χώρο.');return false;}}
-let currentRoads=[],selectedRoad=null,learnerCache=null,learnerKey='',roadOverview=null,lastWazeCenter=null,historicMarkers=null,historyController=null;
+let currentRoads=[],selectedRoad=null,learnerCache=null,learnerKey='',roadOverview=null,lastWazeCenter=null,historicMarkers=null,historyController=null,yearController=null;
 function trainedModel(){const e=events(),key=e.length+':'+(e.at(-1)?.id||'');if(key!==learnerKey||!learnerCache){learnerKey=key;learnerCache=trainOnline(e);}return learnerCache;}
 function roadKey(r,zone=selected){const name=r.name==='Οδός χωρίς καταγεγραμμένο όνομα'?'unnamed-id:'+r.id:r.name;let h=2166136261;for(const c of name.normalize('NFC'))h=Math.imul(h^c.charCodeAt(0),16777619);return 'street:'+zone.id+':'+(h>>>0).toString(16);}
 function combined(zone,road=null,at=arrival()){return ensemble(zone,events(),at,road,trainedModel());}
@@ -133,7 +134,8 @@ $('search').oninput=e=>{query=e.target.value;selected=null;render();};$('search'
 $('export').onclick=()=>{const blob=new Blob([JSON.stringify({version:1,events:own,traffic:ownTraffic},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='araxe-reports.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 $('import').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>2000000)throw Error('Το αρχείο είναι πολύ μεγάλο.');const b=JSON.parse(await file.text());if(b.version!==1||!Array.isArray(b.events)||b.events.length>10000||!b.events.every(x=>typeof x.id==='string'&&x.id.length<100&&zones.some(z=>z.id===x.zone)&&[0,1].includes(x.outcome)&&Number.isFinite(x.at)&&x.at>0&&x.at<=Date.now()))throw Error('Μη έγκυρο αντίγραφο.');own=mergeEvents(own,b.events.map(({id,zone,outcome,at,road})=>({id,zone,outcome,at,road:typeof road==='string'&&road.length<91?road:null})));put('araxe-reports',own);if(Array.isArray(b.traffic)&&b.traffic.every(x=>typeof x.id==='string'&&x.id.length<100&&zones.some(z=>z.id===x.zone)&&[0,1,2].includes(x.outcome)&&Number.isFinite(x.at)&&x.at>0&&x.at<=Date.now())){ownTraffic=mergeEvents(ownTraffic,b.traffic.map(({id,zone,outcome,at,road})=>({id,zone,outcome,at,road:typeof road==='string'&&road.length<91?road:null})));put('araxe-traffic',ownTraffic);}render();$('learn').close();showLearn();toast('Η προσωπική μνήμη επαναφέρθηκε. Δεν δημοσιεύτηκαν αναφορές στον server.');}catch(e){toast(e.message);}finally{e.target.value='';}};
 function initMap(){if(!window.L){$('mapError').hidden=false;return;}map=L.map('map',{zoomControl:false}).setView([40.632,22.947],12);L.control.zoom({position:'topright'}).addTo(map);const street=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors · OpenFreeMap · © OpenMapTiles'}).addTo(map);const imagery=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles © Esri · Maxar · Earthstar Geographics'});const openImagery=L.tileLayer('https://global.imagery.hotosm.org/{z}/{x}/{y}.png',{maxZoom:21,maxNativeZoom:20,attribution:'Imagery © OpenAerialMap contributors · CC-BY sources'});let openVisible=false,openError=false;openImagery.on('tileerror',()=>{if(openVisible&&!openError){openError=true;toast('Δεν υπάρχει εγγυημένη κάλυψη OpenAerialMap σε κάθε δρόμο ή επίπεδο ζουμ.');}});markers=L.layerGroup().addTo(map);historicMarkers=L.layerGroup().addTo(map);zoneMarkers=L.layerGroup().addTo(map);
- historyController=createHistoricalMap({map,getCatalog:satelliteCatalogSnapshot,onTrain:id=>openSatelliteTraining(id)});const denseMarkers=L.layerGroup();zones.forEach((z,i)=>{const target=i<13?denseMarkers:zoneMarkers;L.circle([z.lat,z.lon],{radius:450,color:'#769258',weight:1,fillOpacity:.07}).addTo(target);L.marker([z.lat,z.lon],{icon:L.divIcon({className:'',html:`<span class="zone-label">${esc(z.name)}</span>`,iconSize:[120,28],iconAnchor:[50,14]})}).on('click',()=>pickZone(z.id)).addTo(target);});map.on('zoomend',()=>{if(map.getZoom()>=14){if(!map.hasLayer(denseMarkers))denseMarkers.addTo(map);}else if(map.hasLayer(denseMarkers))map.removeLayer(denseMarkers);if(map.getZoom()<11)map.removeLayer(zoneMarkers);else if(!map.hasLayer(zoneMarkers))zoneMarkers.addTo(map);});$('layers').onclick=()=>{
+ historyController=createHistoricalMap({map,getCatalog:satelliteCatalogSnapshot,onTrain:id=>openSatelliteTraining(id)});
+ yearController=createSatelliteYearMap(map);const denseMarkers=L.layerGroup();zones.forEach((z,i)=>{const target=i<13?denseMarkers:zoneMarkers;L.circle([z.lat,z.lon],{radius:450,color:'#769258',weight:1,fillOpacity:.07}).addTo(target);L.marker([z.lat,z.lon],{icon:L.divIcon({className:'',html:`<span class="zone-label">${esc(z.name)}</span>`,iconSize:[120,28],iconAnchor:[50,14]})}).on('click',()=>pickZone(z.id)).addTo(target);});map.on('zoomend',()=>{if(map.getZoom()>=14){if(!map.hasLayer(denseMarkers))denseMarkers.addTo(map);}else if(map.hasLayer(denseMarkers))map.removeLayer(denseMarkers);if(map.getZoom()<11)map.removeLayer(zoneMarkers);else if(!map.hasLayer(zoneMarkers))zoneMarkers.addTo(map);});$('layers').onclick=()=>{
  if(openVisible){map.removeLayer(openImagery);openVisible=false;$('oamLayer').classList.remove('chosen');}
  satellite=!satellite;
  $('imageryNotice').hidden=!satellite;
@@ -158,9 +160,10 @@ $('oamLayer').onclick=()=>{
  if(roadMode==='historical'){
   // Keep OSM street tiles under Esri so a blocked archival tile never leaves a blank map.
   imagery.addTo(map);satellite=true;
+  yearController?.activate(true);
   $('layers').textContent='▧ Οδικός χάρτης';
-  $('imageryNotice').hidden=false;
-  $('imageryNotice').textContent='Υπόβαθρο Esri για προσανατολισμό (άγνωστη ημερομηνία). Οι πραγματικές χρονολογημένες λήψεις OpenAerialMap και οι αναλυμένες μεταβολές φαίνονται μόνο στα ξεχωριστά επισημασμένα επίπεδα.';
+  $('imageryNotice').hidden=true;
+  // Historical-year control labels the source and date of imagery.
  }
  const c=get('araxe-car',null);if(c)carMarker=L.marker([c.lat,c.lon]).addTo(map).bindTooltip('Το αυτοκίνητό μου');render();}
 $('parkingRoads').onclick=()=>setRoadMode('parking');$('trafficRoads').onclick=()=>setRoadMode('traffic');$('zoneRoads').onclick=()=>setRoadMode('zones');$('historicalSlots').onclick=()=>setRoadMode('historical');
@@ -187,6 +190,7 @@ function setLiveTrafficVisibility(enabled){
 }
 function setRoadMode(mode){
  roadMode=mode;
+ yearController?.activate(mode==='historical');
  setLiveTrafficVisibility(mode==='traffic');
  $('probLegend').textContent=mode==='historical'?'Ιστορικές υποψήφιες κενές θέσεις από ταξινομημένες φωτογραφίες · δεν είναι live, ούτε πιστοποιημένα νόμιμες.':mode==='zones'?'Ζώνες A–D: γεωμετρική προτεραιότητα εξερεύνησης · όχι διαθεσιμότητα / νομιμότητα θέσης':mode==='traffic'?'Ζωντανός κυκλοφοριακός χάρτης Waze (εξωτερική πηγή). Οι στατιστικές μπάρες της εφαρμογής αφορούν μόνο αναφορές οδηγών.':'Στάθμευση: πράσινο ≥60% · κίτρινο 35–59% · κόκκινο <35% · γκρι = ανεπαρκές δείγμα';
  for(const id of ['parkingRoads','trafficRoads','zoneRoads','historicalSlots'])$(id).classList.toggle('chosen',id===(mode==='historical'?'historicalSlots':mode==='zones'?'zoneRoads':mode==='traffic'?'trafficRoads':'parkingRoads'));
