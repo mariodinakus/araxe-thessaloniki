@@ -41,16 +41,16 @@ function normalizedWeights(scores,completed){
 }
 /** Chronological prequential backtesting. Earlier reports only. Never evaluate on training labels. */
 export function backtestModels(events,zone,{now=Date.now(),maxEvaluations=35}={}){
- const valid=reliableEvents(events,now).filter(e=>e.zone===zone);
+ const valid=reliableEvents(events,now),targets=valid.filter(e=>e.zone===zone);
  const scores=Object.fromEntries(NAMES.map(n=>[n,0]));
- let evaluated=0,baseline=0,ensembleLoss=0;const last=Math.max(0,valid.length-maxEvaluations);
+ let evaluated=0,baseline=0,ensembleLoss=0;const last=Math.max(0,targets.length-maxEvaluations);
  // Re-estimate after every previous record. No lookahead, no timestamps > current label.
- for(let i=last;i<valid.length;i++){
-  const sample=valid[i],past=valid.slice(0,i).filter(e=>e.at<sample.at);
-  if(past.length<25)continue;
+ for(let i=last;i<targets.length;i++){
+  const sample=targets[i],past=valid.filter(e=>e.at<sample.at),priorZone=past.filter(e=>e.zone===zone);
+  if(priorZone.length<25)continue;
   const estimate=allModels(zone,past,sample.at,null,sample.at-1);
   if(!estimate.base.ready)continue;
-  const freq=past.reduce((s,e)=>s+e.outcome,0)/past.length;
+  const freq=priorZone.reduce((s,e)=>s+e.outcome,0)/priorZone.length;
   baseline+=(freq-sample.outcome)**2;
   // Predict using weights learned from strictly EARLIER hold-out labels.
   const before=normalizedWeights(scores,evaluated);
@@ -73,7 +73,7 @@ export function parkingForecast(zone,events,at=Date.now(),{road=null,now=Date.no
  const valid=reliableEvents(events,now);
  const local=valid.filter(e=>e.zone===zone);
  const stats=allModels(zone,valid,at,road,now,trained);
- const validation=backtest||backtestModels(local,zone,{now});
+ const validation=backtest||backtestModels(valid,zone,{now});
  const w=validation.weights;
  const p=clamp(NAMES.reduce((s,n)=>s+w[n]*stats.values[n],0),.01,.99);
  const disagreement=Math.max(...Object.values(stats.values))-Math.min(...Object.values(stats.values));
