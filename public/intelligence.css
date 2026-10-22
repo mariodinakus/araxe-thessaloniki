@@ -135,3 +135,22 @@
 #forecastLab .intel-block-head h4{font-size:13px;letter-spacing:-.2px}
 #forecastLab .intel-block-head>span{font-size:10px}
 @media(max-width:700px){.forecast-showcase-head strong{font-size:15px}.forecast-showcase-head>small{font-size:8px}#forecastLab{margin:8px 0 14px;padding:12px}}
+
+
+/* Cold-start is deliberately not styled as trained vacancy probability. */
+.forecast-cold-start{margin:10px 0 14px;background:#fff9e9;border:1px solid #e7d9b1;border-radius:12px;padding:12px;color:#604d29}
+.forecast-cold-start[hidden]{display:none}
+.forecast-cold-tag{font-size:9px;letter-spacing:.35px;font-weight:900;color:#815f20}
+.forecast-cold-start>p{font-size:10px;line-height:1.7;margin:8px 0}
+#forecastColdRoads{font-size:10px;margin:8px 0}
+#forecastColdRoads>strong{display:block;font-size:9px;margin:6px 0}
+#forecastColdRoads>div{display:flex;gap:8px;justify-content:space-between;align-items:baseline;border-top:1px solid #ecddbe;padding:6px 0}
+#forecastColdRoads>div span{font-size:10px;flex:1}
+#forecastColdRoads>div b{font-size:9px;white-space:nowrap}
+#forecastColdRoads>small{font-size:9px;line-height:1.6}
+.forecast-cold-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.forecast-cold-actions>button{font-size:10px;padding:10px;flex:1;background:#fff;border:1px solid #d9c6a1;border-radius:9px;font-weight:800;color:#654d26}
+.forecast-cold-actions>button:first-child{background:#275d45;color:white;border-color:#275d45}
+.forecast-cold-horizon i{background:#cf993b}
+.forecast-cold-horizon .forecast-hour span{font-size:8px}
+@media(max-width:700px){.forecast-cold-start{padding:10px}.forecast-cold-actions>button{min-width:125px;font-size:9px}}
