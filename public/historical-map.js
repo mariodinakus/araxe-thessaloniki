@@ -84,6 +84,8 @@ export function createHistoricalMap({map,getCatalog,onTrain}){
    $('historyMapStatus').textContent=data.classified.length+' πιθανές οπτικά κενές θέσεις σε παλιές φωτογραφίες · όχι σημερινή πληρότητα.';
   }else if(!summary){
    $('historyMapStatus').textContent='Έλεγχος OpenAerialMap για αυτή την περιοχή. Γκρι δρόμοι = άγνωστη πληρότητα, όχι ελεύθερες ή γεμάτες θέσεις.';
+  }else if(summary.error){
+   $('historyMapStatus').textContent='Η πηγή ιστορικών λήψεων δεν αποκρίθηκε: '+summary.error+'. Βλέπεις μόνο το υπόβαθρο προσανατολισμού, όχι ανάλυση δορυφόρου.';
   }else if(!scenes.length){
    $('historyMapStatus').textContent='Δεν υπάρχουν κατάλληλες παλιές λήψεις υψηλής ανάλυσης στον κατάλογο για την περιοχή. Δεν υπάρχουν πραγματικά σημεία για σχεδίαση.';
   }else{
