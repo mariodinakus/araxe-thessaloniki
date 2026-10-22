@@ -1,4 +1,5 @@
 import {zones} from './model.js';
+import {sceneCoversPoint,sceneDate,sceneGsd,sceneLicense,scenePlatform,ALLOWED_LICENSES} from './satellite-catalog.js';
 import {SLOT_KEY,SCAN_KEY,APPEARANCE_KEY,sampleCurbCandidates,validCurbLabels,classifyHistoricalCurb,groupCurbHistory,compareDatedAppearance,pixelForCoordinate} from './satellite-slots.js';
 import {extractImageFeatures,trainVisualModel,predictPatch,webMercatorTile,acquisitionDate,validSamples,updateSceneProfile} from './aerial-ml.js';
 
@@ -50,7 +51,7 @@ function setImage(img,meta){
  photo=meta;marks=[];curbCandidates=[];view.hidden=false;
  $('aerialImageInfo').textContent=`${meta.provider} · ${meta.date||'άγνωστη ημερομηνία λήψης'} · ${w}×${h}px · ${meta.gsd?meta.gsd+' m/pixel':'χωρίς τεκμηριωμένη ανάλυση'}`;
  redraw();status();observeScene(meta);
- if(meta.geo)loadCurbCandidates(meta).catch(e=>notice('Γεωμετρία δρόμων: '+e.message));
+ return meta.geo?loadCurbCandidates(meta).catch(e=>notice('Γεωμετρία δρόμων: '+e.message)):Promise.resolve();
 }
 function patch(x,y){
  const size=Math.min(40,source.width,source.height);
@@ -65,7 +66,7 @@ function curbStatus(){
  $('curbStats').textContent=`${curbCandidates.length} υποψήφια σημεία κοντά σε δρόμους · ${curbLabels.length} επισημάνσεις σε ${unique} ιστορικές λήψεις · ${scanned.length} σαρωμένες λήψεις · ${historic.filter(x=>x.changeEvidence!==null).length} συγκρίσιμες ταξινομήσεις · ${appearance.length} σημεία με οπτική σύγκριση διαφορετικών παλιών ημερομηνιών. ${curbModel.ready?'Το εκπαιδευμένο μοντέλο ξεπέρασε το baseline σε ανεξάρτητη λήψη.':'Χρειάζεται εκπαίδευση από ≥3 διαφορετικές εικόνες με οχήματα και οπτικά κενά.'}`;
  $('curbScan').disabled=!curbModel.ready||!photo?.geo||!curbCandidates.length;
  $('curbScanArchive').disabled=!curbModel.ready||archive.length<2;
- $('curbCompare').disabled=archive.length<2;
+ $('curbCompare').disabled=new Set(archive.map(sceneDate)).size<2;
 }
 async function loadCurbCandidates(meta){
  const seq=++imageRequest,resp=await fetch('/api/streets?zone='+encodeURIComponent(meta.zone));
@@ -87,7 +88,7 @@ function recordHistoricAppearance(meta){
   }).filter(Boolean);
   if(!patches.length)return;
   const revised=[...current.filter(x=>x.scene!==meta.id),{scene:meta.id,date:meta.date,zone:meta.zone,patches}].slice(-8);
-  store(APPEARANCE_KEY,revised);
+  store(APPEARANCE_KEY,revised);window.dispatchEvent(new Event('araxe:satellite-update'));
  }catch(e){notice('Τοπική αποθήκευση ιστορικής σύγκρισης: '+e.message);}
 }
 function labelCurbAt(x,y){
@@ -138,11 +139,11 @@ async function compareHistoricArchive(){
  if(archive.length<2)return notice('Για ιστορική σύγκριση απαιτούνται τουλάχιστον δύο διαφορετικές λήψεις.');
  const button=$('curbCompare');button.disabled=true;let loaded=0;
  try{
-  for(const f of archive.slice(0,5)){
+  for(const f of archive.filter((f,i,a)=>a.findIndex(o=>sceneDate(o)===sceneDate(f))===i).slice(0,5)){
    try{
     notice('Αυτοεκπαίδευση από παλιές εικόνες: '+(loaded+1)+' / έως '+Math.min(archive.length,5));
     await loadOam({feature:f,zone:zones.find(x=>x.id===$('aerialZone').value)},true);
-    if(photo?.geo){await loadCurbCandidates(photo);loaded++;}
+    if(photo?.geo){loaded++;}
    }catch(e){notice('Μία ιστορική λήψη δεν διαβάζεται: '+e.message);}
   }
   const changes=compareDatedAppearance(read(APPEARANCE_KEY,[])).filter(x=>x.zone===$('aerialZone').value);
@@ -161,7 +162,7 @@ async function scanHistoricArchive(){
    notice('Σύγκριση ιστορικών λήψεων: '+(completed+1)+'/'+scenes.length);
    try{await loadOam({feature:f,zone:zones.find(x=>x.id===$('aerialZone').value)},true);
     if(!photo?.geo)continue;
-    await loadCurbCandidates(photo);analyzeCurbs();completed++;total+=curbScans.at(-1)?.items?.length||0;
+    analyzeCurbs();completed++;total+=curbScans.at(-1)?.items?.length||0;
    }catch(e){notice('Παράλειψη λήψης: '+e.message);}
   }
   notice('Εξετάστηκαν '+completed+' ιστορικές λήψεις. Η σύγκριση αφορά παλιές εικόνες, όχι ελεύθερες θέσεις τώρα.');
@@ -203,17 +204,17 @@ function intersects(feature,lat,lon){const b=feature?.bbox;return Array.isArray(
 async function discover(zoneId,quiet=false){
  const z=zones.find(x=>x.id===zoneId);if(!z)throw Error('Άγνωστη περιοχή');
  const bbox=[z.lon-.013,z.lat-.009,z.lon+.013,z.lat+.009].join(',');
- const url='https://api.imagery.hotosm.org/stac/search?bbox='+encodeURIComponent(bbox)+'&limit=30';
+ const url='https://api.imagery.hotosm.org/stac/search?bbox='+encodeURIComponent(bbox)+'&limit=100';
  const response=await fetch(url,{signal:AbortSignal.timeout(13000),headers:{Accept:'application/geo+json, application/json'}});
  if(!response.ok)throw Error('Ο κατάλογος OpenAerialMap δεν ανταποκρίνεται ('+response.status+').');
- const body=await response.json();const items=(Array.isArray(body.features)?body.features:[]).filter(f=>f.id&&intersects(f,z.lat,z.lon)&&acquisitionDate(f));
+ const body=await response.json();const items=(Array.isArray(body.features)?body.features:[]).filter(f=>f.id&&sceneCoversPoint(f,z)&&sceneDate(f));
  items.sort((a,b)=>acquisitionDate(b).localeCompare(acquisitionDate(a)));
  const eligible=items.filter(f=>{
-  const g=Number(f.properties?.gsd),license=String(f.properties?.license||f.properties?.['oam:license']||'').toUpperCase();
-  return Number.isFinite(g)&&g>0&&g<=.5&&['CC-BY-4.0','CC-BY-SA-4.0','CC-BY'].includes(license);
+  const g=sceneGsd(f),license=sceneLicense(f);
+  return Number.isFinite(g)&&g>0&&g<=.5&&ALLOWED_LICENSES.has(license)&&['satellite','uav','aircraft','balloon','kite'].includes(scenePlatform(f));
  });
  archive=eligible.sort((a,b)=>{
-  const plat=x=>x.properties?.['oam:platform_type']==='satellite'?1:0;
+  const plat=x=>scenePlatform(x)==='satellite'?1:0;
   return plat(b)-plat(a)||acquisitionDate(b).localeCompare(acquisitionDate(a));
  }).slice(0,12);
  $('curbScenes').innerHTML=archive.length?archive.map((f,i)=>'<option value="'+i+'">'+safe(acquisitionDate(f))+' · '+safe(String(f.properties?.gsd))+' m/pixel · '+safe(f.properties?.['oam:platform_type']==='satellite'?'ΔΟΡΥΦΟΡΟΣ':'εναέρια λήψη')+' · '+safe(f.id)+'</option>').join(''):'<option value="">Καμία επαρκώς λεπτομερής και αδειοδοτημένη λήψη</option>';
@@ -246,7 +247,7 @@ async function loadOam(record,display=true){
  for(const r of results)if(r){context.drawImage(r.im,r.dx*256,r.dy*256,256,256);loaded.add(r.dx+':'+r.dy);}
  if(!loaded.has('1:1'))throw Error('Δεν καλύπτεται με πραγματική εικόνα το κέντρο της περιοχής.');
  if(display){
-  setImage(canvas,{id:'oam:'+feature.id+':19/'+center.x+'/'+center.y,provider:'OpenAerialMap · '+(feature.properties?.['oam:platform_type']==='satellite'?'Δορυφορική':'Εναέρια')+' · '+(feature.properties?.['oam:producer_name']||feature.providers?.[0]?.name||'Open Imagery Network')+' · '+(feature.properties?.license||'CC-BY-4.0'),
+  await setImage(canvas,{id:'oam:'+feature.id+':19/'+center.x+'/'+center.y,provider:'OpenAerialMap · '+(feature.properties?.['oam:platform_type']==='satellite'?'Δορυφορική':'Εναέρια')+' · '+(feature.properties?.['oam:producer_name']||feature.providers?.[0]?.name||'Open Imagery Network')+' · '+(feature.properties?.license||'CC-BY-4.0'),
    date,zone:zone.id,gsd,geo:{z:19,tileX,tileY},availableTiles:loaded,licenseVerified:true});
  }
  return {id:feature.id,date,tiles:loaded.size};
@@ -271,7 +272,7 @@ async function autoCheck(){
    if(known.has(scene))continue;
    try{
     await loadOam({feature:f,zone:area},true);
-    if(photo?.geo){await loadCurbCandidates(photo);scanned++;}
+    if(photo?.geo){scanned++;}
    }catch(e){notice('Μία δορυφορική λήψη παραλείφθηκε: '+e.message);}
   }
   // The supervised classifier scans only if independent-scene validation succeeded.
@@ -283,16 +284,23 @@ async function autoCheck(){
  finally{scanBusy=false;displayLast();curbStatus();}
 }
 function displayLast(){const latest=read(LAST,null);$('aerialLast').textContent=latest?`Τελευταία αυτόματη ανάλυση: ${latest.date||'χωρίς ημερομηνία'} · περιοχή ${latest.zone} · ${latest.visual?.high||0} από ${latest.visual?.total||0} τμήματα με πιθανή παρουσία οχήματος (μη επαληθευμένο).`:'Δεν έχει πραγματοποιηθεί αυτόματη ανάλυση νέας εικόνας.';}
-export function openAerialLab(zoneId=null){
+export function openAerialLab(zoneId=null,options={}){
  if(!$('aerialLab'))return;
  $('aerialZone').value=zones.some(z=>z.id===zoneId)?zoneId:'menemeni';
  displayLast();status();$('aerialSceneStatus').textContent='Η αυτοεκπαίδευση οπτικού υποβάθρου ξεκινά όταν φορτώσεις εικόνα.';$('aerialLab').showModal();
  const activeZone=$('aerialZone').value;
  notice('Αναζητώ αυτόματα κατάλληλες δορυφορικές / εναέριες λήψεις OpenAerialMap για '+zones.find(z=>z.id===activeZone)?.name+'…');
- discover(activeZone).then(result=>{
-  if(result&&$('aerialLab').open&&$('aerialZone').value===activeZone)return loadOam(result);
- }).catch(e=>notice('Δεν φορτώθηκε αυτόματα εξωτερική λήψη: '+e.message+'. Ο ανοικτός χάρτης εξακολουθεί να είναι διαθέσιμος.'));
+ discover(activeZone).then(async result=>{
+  if(!result||!$('aerialLab').open||$('aerialZone').value!==activeZone)return;
+  if(options.autoCompare&&new Set(archive.map(sceneDate)).size>=2){
+   await compareHistoricArchive();
+  }else{
+   await loadOam(result);
+   if(options.autoCompare)notice('Μόνο μία ημερομηνία κατάλληλης λήψης. Χρειάζονται διαφορετικές ημερομηνίες για ιστορική εκπαίδευση.');
+  }
+ }).catch(e=>notice('Ανάλυση ιστορικών λήψεων: '+e.message+'. Έλεγξε κάλυψη και άδεια στο OAM.'));
 }
+export function openSatelliteTraining(zoneId=null){return openAerialLab(zoneId,{autoCompare:true});}
 export function setupAerialLab(){
  const z=$('aerialZone');z.innerHTML=zones.map(v=>`<option value="${safe(v.id)}">${safe(v.name)}</option>`).join('');
  $('aerialDate').max=new Date().toISOString().slice(0,10);
