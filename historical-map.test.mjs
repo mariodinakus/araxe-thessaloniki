@@ -46,5 +46,5 @@ test('the default map visibly shows dated satellite history, even before model l
  assert.ok(controller.includes('showImage(scenes[0])'));
  assert.ok(style.includes('.history-map-panel'));
  assert.ok(catalog.includes('bbox:f.bbox.slice(0,4).map(Number)'));
- assert.ok(sw.includes('araxe-v17'));
+ assert.ok(sw.includes('araxe-v18'));
 });
