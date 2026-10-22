@@ -43,7 +43,7 @@ test('satellite historical evidence is foremost in home UI with direct auto-trai
  const app=await readFile(new URL('./public/app.js',import.meta.url),'utf8');
  const aerial=await readFile(new URL('./public/aerial-lab.js',import.meta.url),'utf8');
  const hq=await readFile(new URL('./public/satellite-hq.js',import.meta.url),'utf8');
- for(const id of ['satelliteHQ','satHQTrain','satHQRefresh','satHQMap','satHQScenes','satHQPoints','satHQTimeline','satHQModelBars','satHQStatus','satHQRoads','satHQRoadCount'])assert.ok(html.includes('id="'+id+'"'),id);
+ for(const id of ['satelliteHQ','satHQTrain','satHQRefresh','satHQMap','satHQScenes','satHQPoints','satHQTimeline','satHQModelBars','satHQStatus','satHQRoads','satHQRoadCount','satHQVisualEvidence','satHQVisualContent'])assert.ok(html.includes('id="'+id+'"'),id);
  assert.ok(html.indexOf('id="satelliteHQ"')<html.indexOf('id="forecastLab"'));
  assert.ok(html.includes('data-view="satellite"'));
  assert.ok(app.includes('renderSatelliteHQ(selected)'));
