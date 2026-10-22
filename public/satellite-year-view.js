@@ -27,6 +27,7 @@ export function createSatelliteYearMap(map){
   if(layer){map.removeLayer(layer);layer=null;}
   year=n;received=false;errors=0;
   $('satelliteYear').value=String(year);
+  if(active&&map.getZoom()>14)map.setZoom(14);
   if(!active)return;
   layer=L.tileLayer(url,{maxNativeZoom:14,maxZoom:21,minZoom:0,attribution:credit,crossOrigin:'anonymous',opacity:1});
   layer.on('tileload',()=>{
