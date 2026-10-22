@@ -55,6 +55,31 @@ function focusSatellite(){
  if(!selected)pickZone('center',false);
  $('satelliteHQ')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
+function focusMap(){
+ document.querySelectorAll('dialog[open]').forEach(d=>d.close());
+ if(!selected)pickZone('center',false);
+ setRoadMode('historical');
+ const panel=$('mapArea');
+ panel?.scrollIntoView({behavior:'smooth',block:'start'});
+ map?.invalidateSize?.();
+}
+async function checkDeploymentVersion(){
+ const target=$('mapDeployVersion');
+ try{
+  const response=await fetch('/api/version?ts='+Date.now(),{cache:'no-store',signal:AbortSignal.timeout(10000)});
+  if(!response.ok)throw Error('HTTP '+response.status);
+  const json=await response.json();
+  if(json.mapFeature!=='satellite-history-map-v2')throw Error('Η νέα λειτουργία δεν βρίσκεται σε αυτό το deployment');
+  target.textContent='Render: '+(typeof json.deployCommit==='string'?json.deployCommit.slice(0,8):'χωρίς Git SHA')+' · χάρτης v2';
+  target.title=json.deployCommit||'Δεν επιστράφηκε commit από τον server';
+  target.dataset.ok='true';
+ }catch(e){
+  target.textContent='Δεν επιβεβαιώθηκε η ζωντανή έκδοση · '+e.message;
+  target.dataset.ok='false';
+ }
+}
+$('mapQuick').onclick=focusMap;
+$('mapCheckVersion').onclick=checkDeploymentVersion;
 function focusForecast(){
  document.querySelectorAll('dialog[open]').forEach(d=>d.close());
  if(!selected)pickZone('center',false);
@@ -181,5 +206,6 @@ setupSatelliteHQ({
 window.addEventListener('araxe:satellite-update',()=>{if(roadMode==='historical'){showHistoricalMarkers();repaintRoads();}});
 window.addEventListener('araxe:satellite-catalog',e=>{if(roadMode==='historical'&&selected?.id===e.detail?.zoneId)showHistoricalMarkers();});
 window.addEventListener('araxe:hide-historical-map',()=>setRoadMode('parking'));
+void checkDeploymentVersion();
 
 $('priceDuration').onchange=renderTariffs;renderTariffs();render();initMap();pickZone('center',false);sync();loadParking();setInterval(sync,60000);setInterval(loadParking,120000);if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
