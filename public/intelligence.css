@@ -110,3 +110,14 @@
 .smart-detail span{font-size:9px;display:block;color:#517262;line-height:1.5}
 .smart-detail b{display:block;font-size:13px}.smart-detail small{font-size:9px;color:#617e6b;line-height:1.55}
 @media(max-width:700px){.forecast-lab{padding:10px;margin:12px 0}.forecast-model-row{grid-template-columns:90px minmax(0,1fr) 27px 46px;gap:4px}.forecast-model-row span{font-size:8px}.forecast-model-row small{font-size:7px}.forecast-hero>strong{font-size:27px}.forecast-backtest{flex-wrap:wrap}.smart-detail{padding:10px}.smart-detail>div:first-child{min-width:80px}}
+
+
+.sat-model{padding:10px 12px;background:#edf4ee;border-radius:10px;border:1px solid #d9e7da;margin:12px 0;font-size:9px;line-height:1.6}
+.sat-model strong{font-size:10px;display:block;margin-bottom:8px}
+.sat-model-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:7px 0 10px}
+.sat-model-kpis span{font-size:8px;line-height:1.5;padding:7px;background:white;border-radius:7px}
+.sat-model-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #d8e5da}
+.sat-model-row span{flex:1;font-size:9px}
+.sat-model-row b{color:#255e40;font-variant-numeric:tabular-nums;font-size:9px}
+.sat-model-row small{font-size:8px;color:#6c796e}
+.sat-model>small{font-size:8px;display:block;margin-top:9px;line-height:1.6}
