@@ -24,7 +24,7 @@ test('unavailable satellite sample evidence is explicitly diagnosed on the map',
  const history=await read('public/historical-map.js');
  assert.ok(history.includes("$('mapWhyNoDots').textContent="));
  assert.ok(history.includes('Δεν εμφανίζονται ιστορικά σημεία'));
- assert.ok(history.includes('Δεν υπάρχουν ακόμη αναλυμένες'));
+ assert.ok(history.includes('δεν έχουν ακόμη αναλυθεί'));
 });
 test('new PWA cache and map styles follow runtime diagnostics release',async()=>{
  const sw=await read('public/sw.js'),css=await read('public/satellite-hq.css');
