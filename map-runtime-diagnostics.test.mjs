@@ -28,7 +28,7 @@ test('unavailable satellite sample evidence is explicitly diagnosed on the map',
 });
 test('new PWA cache and map styles follow runtime diagnostics release',async()=>{
  const sw=await read('public/sw.js'),css=await read('public/satellite-hq.css');
- assert.ok(sw.includes('araxe-v18'));
+ assert.ok(sw.includes('araxe-v19'));
  assert.ok(css.includes('.quick-map'));
  assert.ok(css.includes('.map-build-row'));
 });
