@@ -92,6 +92,7 @@ async function loadZone(zone,force=false){
   zoneCache.set(zone.id,{error:e.name==='AbortError'?'Ακυρώθηκε η αναζήτηση':e.message,loading:false,checkedAt:Date.now()});
  }
  if(active?.id===zone.id)paint(zone);
+ window.dispatchEvent(new CustomEvent('araxe:satellite-catalog',{detail:{zoneId:zone.id}}));
 }
 export function renderSatelliteHQ(zone,{refresh=false}={}){
  active=zone||null;
