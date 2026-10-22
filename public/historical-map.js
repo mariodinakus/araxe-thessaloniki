@@ -89,11 +89,10 @@ export function createHistoricalMap({map,getCatalog,onTrain}){
   }else{
    $('historyMapStatus').textContent='Βρέθηκαν πραγματικές ιστορικές λήψεις. Προβολή εικόνας και εκπαίδευση διαθέσιμες εδώ.';
   }
+  if(image&&(!scenes.length||!scenes.some(s=>s.id===imageId)))clearImage();
   if(scenes.length&&!image&&onceFor!==region.id){
    onceFor=region.id;
-   showImage(scenes[0]); // Automatically try the actual archive, never static/mock imagery.
-  }else if(image&&scenes.length&&!scenes.some(s=>s.id===imageId)){
-   clearImage();
+   showImage(scenes[0]); // Display only a real catalogued dated image, never a generic substitute.
   }
  }
  $('historyMapHide').onclick=()=>window.dispatchEvent(new Event('araxe:hide-historical-map'));
